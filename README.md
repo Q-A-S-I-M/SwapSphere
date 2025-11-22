@@ -1,2 +1,2 @@
-# SmartSphere
+# SwapSphere
 Online Bartering Application
