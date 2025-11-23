@@ -20,7 +20,7 @@ public class RefreshTokenRowMapper implements RowMapper<RefreshToken> {
 
         // set user using just the username or query full user separately
         User user = new User();
-        user.setUser_id(rs.getString("user_id")); // adjust if needed
+        user.setUsername(rs.getString("username")); // adjust if needed
         token.setUser(user);
 
         return token;

@@ -30,7 +30,7 @@ public class RefreshTokenService {
         }
 
         User user = optionalUser.get();
-        deleteByUserIdAndUserAgentAndIp(user.getUser_id(), userAgent, ipAddress);
+        deleteByUserIdAndUserAgentAndIp(user.getUsername(), userAgent, ipAddress);
 
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setUser(user);
@@ -51,7 +51,7 @@ public class RefreshTokenService {
             "INSERT INTO refresh_tokens (token, expiry_date, user_id, user_agent, ip_address) VALUES (?, ?, ?, ?, ?)",
             token.getToken(),
             token.getExpiryDate(),
-            token.getUser().getUser_id(),
+            token.getUser().getUsername(),
             token.getUserAgent(),
             token.getIpAddress()
         );
@@ -62,7 +62,6 @@ public class RefreshTokenService {
         System.out.println(token);
         Optional<RefreshToken> optional = findByToken(token);
         if (optional.isEmpty()) {
-            System.out.println("blaah");
             throw new RuntimeException("Invalid refresh token");
         }
 
@@ -75,14 +74,19 @@ public class RefreshTokenService {
             throw new RuntimeException("Refresh token expired");
         }
 
-        return refreshToken.getUser().getUser_id();
+        return refreshToken.getUser().getUsername();
     }
 
     public Optional<RefreshToken> findByToken(String token) {
         try {
             System.out.println(token);
             String sql = "SELECT * FROM refresh_tokens WHERE token = ?";
-            RefreshToken refreshToken = template.queryForObject(sql, new Object[]{token},new RefreshTokenRowMapper());
+            RefreshToken refreshToken = template.query(sql, rs -> {
+                if (rs.next()) {
+                    return new RefreshTokenRowMapper().mapRow(rs, 1);
+                }
+                return null;
+            }, token);
             return Optional.ofNullable(refreshToken);
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
@@ -91,11 +95,13 @@ public class RefreshTokenService {
 
     public Optional<User> findByUsername(String username) {
         try {
-            User user = template.queryForObject(
-                "SELECT * FROM users WHERE user_id = ?",
-                new Object[]{username},
-                new BeanPropertyRowMapper<>(User.class)
-            );
+            String sql = "SELECT * FROM users WHERE username = ?";
+            User user = template.query(sql, rs -> {
+                if(rs.next()){
+                    return new BeanPropertyRowMapper<>(User.class).mapRow(rs, 1);
+                }
+                return null;
+            }, username);
             return Optional.ofNullable(user);
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();

@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.example.SwapSphere.Entities.RefreshToken;
 import com.example.SwapSphere.Services.CustomUserDetailsService;
 
 import jakarta.servlet.FilterChain;
@@ -27,9 +26,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Autowired
     private CustomUserDetailsService userDetailsService;
-
-    @Autowired
-    private RefreshTokenService refreshTokenService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
