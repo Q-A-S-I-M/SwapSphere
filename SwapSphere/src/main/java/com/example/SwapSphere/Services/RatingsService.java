@@ -8,6 +8,6 @@ public interface RatingsService {
 
     Rating addRating(Rating rating);
 
-    List<Rating> getRatingsByUserId(Long userId);
+    List<Rating> getRatingsByUserId(String username);
     
 }

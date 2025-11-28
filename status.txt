@@ -1,0 +1,37 @@
+✅ 1. OfferItems
+
+AVAILABLE → Item is listed and can be swapped
+
+PENDING_SWAP → Item is currently part of an active swap proposal
+
+SWAPPED → Item has been successfully exchanged
+
+REMOVED → User deleted or deactivated the listing
+
+BLOCKED → Admin removed due to violation
+
+✅ 2. Swap
+
+PENDING → Swap proposal sent, awaiting response
+
+ACCEPTED → Other party accepted, waiting for completion
+
+REJECTED → Receiver rejected the offer
+
+IN_PROGRESS → Swap approved and now active (escrow holding tokens, etc.)
+
+COMPLETED → Swap finished successfully
+
+CANCELLED → Cancelled by user or due to timeout
+
+FAILED → Payment or token process failed
+
+✅ 3. Reports
+
+OPEN → Report has been submitted
+
+UNDER_REVIEW → Admin is investigating
+
+RESOLVED → Issue has been fixed or closed
+
+DISMISSED → Report was invalid

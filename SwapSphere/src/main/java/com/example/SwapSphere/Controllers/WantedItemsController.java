@@ -33,9 +33,9 @@ public class WantedItemsController {
         return ResponseEntity.ok(wantedItemsService.getById(id));
     }
 
-    @GetMapping
-    public ResponseEntity<List<WantedItem>> getAllWantedItems() {
-        return ResponseEntity.ok(wantedItemsService.getAll());
+    @GetMapping("/{username}")
+    public ResponseEntity<List<WantedItem>> getAllWantedItemsByUser(@PathVariable String username) {
+        return ResponseEntity.ok(wantedItemsService.getAllByUser(username));
     }
 
     @PutMapping("/{id}")

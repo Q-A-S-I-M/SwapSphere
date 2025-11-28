@@ -10,7 +10,7 @@ public interface WantedItemsService {
 
     WantedItem getById(Long id);
 
-    List<WantedItem> getAll();
+    List<WantedItem> getAllByUser(String username);
 
     void delete(Long id);
 

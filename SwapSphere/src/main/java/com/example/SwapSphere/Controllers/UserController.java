@@ -33,9 +33,9 @@ public class UserController {
             return ResponseEntity.internalServerError().body("An unexpected error occurred during registration.");
         }
     }
-    @GetMapping("/{id}")
-    public ResponseEntity<User> getUser(@PathVariable Long id) {
-        return ResponseEntity.ok(userService.getUserById(id));
+    @GetMapping("/{username}")
+    public ResponseEntity<User> getUser(@PathVariable String username) {
+        return ResponseEntity.ok(userService.getUserById(username));
     }
 
     @GetMapping
@@ -43,14 +43,14 @@ public class UserController {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User user) {
-        return ResponseEntity.ok(userService.updateUser(id, user));
+    @PutMapping("/{username}")
+    public ResponseEntity<User> updateUser(@PathVariable String username, @RequestBody User user) {
+        return ResponseEntity.ok(userService.updateUser(username, user));
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        userService.deleteUser(id);
+    @DeleteMapping("/{username}")
+    public ResponseEntity<Void> deleteUser(@PathVariable String username) {
+        userService.deleteUser(username);
         return ResponseEntity.noContent().build();
     }
 }

@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.SwapSphere.DTOs.OfferedItemWithImages;
 import com.example.SwapSphere.Entities.OfferedItem;
 import com.example.SwapSphere.Services.OfferedItemsService;
 
@@ -30,18 +31,22 @@ public class OfferedItemsController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<OfferedItem> getItem(@PathVariable Long id) {
-        return ResponseEntity.ok(offeredItemsService.getItemById(id));
+    public ResponseEntity<OfferedItemWithImages> getItem(@PathVariable Long id) {
+        return ResponseEntity.ok(offeredItemsService.getItemByIdWithImages(id));
     }
 
-    @GetMapping
-    public ResponseEntity<List<OfferedItem>> getAllItems() {
-        return ResponseEntity.ok(offeredItemsService.getAllItems());
+    @GetMapping("/{username}")
+    public ResponseEntity<List<OfferedItemWithImages>> getAllItemsByUser(@PathVariable String username) {
+        return ResponseEntity.ok(offeredItemsService.getAllItemsByUser(username));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<OfferedItem> updateItem(@PathVariable Long id, @RequestBody OfferedItem item) {
-        return ResponseEntity.ok(offeredItemsService.updateItem(id, item));
+    @PutMapping("/update-status/{id}")
+    public ResponseEntity<OfferedItem> updateItemStatus(@PathVariable Long id, @RequestBody String item) {
+        return ResponseEntity.ok(offeredItemsService.updateItemStatus(id, item));
+    }
+    @PutMapping("/update-priority/{id}")
+    public ResponseEntity<OfferedItem> updateItemPriority(@PathVariable Long id, @RequestBody int item) {
+        return ResponseEntity.ok(offeredItemsService.updateItemPriority(id, item));
     }
 
     @DeleteMapping("/{id}")

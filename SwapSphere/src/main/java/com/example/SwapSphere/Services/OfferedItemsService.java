@@ -2,17 +2,20 @@ package com.example.SwapSphere.Services;
 
 import java.util.List;
 
+import com.example.SwapSphere.DTOs.OfferedItemWithImages;
 import com.example.SwapSphere.Entities.OfferedItem;
 
 public interface OfferedItemsService {
 
     OfferedItem createItem(OfferedItem item);
 
+    OfferedItemWithImages getItemByIdWithImages(Long id);
     OfferedItem getItemById(Long id);
 
-    List<OfferedItem> getAllItems();
+    List<OfferedItemWithImages> getAllItemsByUser(String username);
 
-    OfferedItem updateItem(Long id, OfferedItem item);
+    OfferedItem updateItemStatus(Long id, String status);
+    OfferedItem updateItemPriority(Long id, int priority);
 
     void deleteItem(Long id);
     

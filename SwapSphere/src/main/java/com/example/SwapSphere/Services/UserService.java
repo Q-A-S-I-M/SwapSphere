@@ -7,11 +7,11 @@ import com.example.SwapSphere.Entities.User;
 public interface UserService{
     public void register(User user);
 
-    public User getUserById(Long id);
+    public User getUserById(String username);
 
     public List<User> getAllUsers();
 
-    public User updateUser(Long id, User user);
+    public User updateUser(String username, User user);
 
-    public void deleteUser(Long id);
+    public void deleteUser(String username);
 }

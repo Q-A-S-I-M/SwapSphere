@@ -11,7 +11,10 @@ public interface SwapService {
     Swap getSwapById(Long id);
 
     List<Swap> getAllSwaps();
+    List<Swap> getAllSwapsForReciever(String username);
+    List<Swap> getAllSwapsForSender(String username);
 
     Swap updateStatus(Long id, String status);
+    List<Swap> getSwapHistory(String username);
     
 }

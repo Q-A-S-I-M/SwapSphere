@@ -1,152 +1,300 @@
-Users
---------------
-username
-full name
-password
-email
-contact
-role
-location_lat
-location_lng
-tokens
-rating
-created at
+@Table(name = "users")
+public class User {
+    @Id
+    @Column(name = "username", nullable = false, unique = true)
+    private String username;
+    @Column(name = "full_name", nullable = false)
+    private String fullName;
+    @Column(name = "email", nullable = false)
+    private String email;
+    @Column(name = "password", nullable = false)
+    private String password;
+    @Column(name = "contact", nullable = false)
+    private String contact;
+    @Column(name = "role", nullable = false)
+    private String role;
+    @Column(name = "rating", nullable = true)
+    private int rating;
+    @Column(name = "created_at", nullable = false)
+    private Timestamp createdAt;
+    @Column(name = "latitude", nullable = false)
+    private Double locLat;
+    @Column(name = "longitude", nullable = false)
+    private Double locLong;
+    @Column(name = "profile_pic_url", nullable = true)
+    private String profilePicUrl;
+}
 
-----------------------
 
-Items
--------------
-item_id
-user_id
-title
-description
-category
-condition
-priority
-image_url
-status
-created at
----------------------
+@Table(name = "offered_items")
+public class OfferedItem {
 
-Wanted Items
--------------
-wanted_id
-user_id
-title
-priority
-category
-description
-created_at
----------------------
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "offered_item_id", nullable = false)
+    private Long offeredItemId;
 
-swap_proposals
----------------
-proposal_id
-sender
-reciever
-offered_item
-requested_item
-status
-created_at
---------------------
+    @ManyToOne
+    @JoinColumn(name = "username", nullable = false, referencedColumnName = "username")
+    private User user;
 
-Ratings
---------
-rating_id
-rater_id
-rated_user_id
-score
-review
-swap_id
-created_at
--------------------
+    private String title;
+    private String description;
+    private String category;
+    private String condition;
+    private int priority;
+    private String status;
 
-Swap_history
---------------
-history_id
-proposal_id
-item_by_sender
-item_by_reciever
-completed_at
----------------------
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+}
 
-Reports
----------
-report_id
-reporter_id
-reported_id
-item_id
-reason
-status
----------------------
+@Table(name = "wanted_items")
+public class WantedItem {
 
-Notification
---------------
-notification_id
-user_id
-type
-message
-is_read
-created_at
----------------------
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "wanted_item_id", nullable = false)
+    private Long wantedItemId;
 
-Tokens_payment
----------------
-payment_id
-user_id
-transaction_id
-amount_paid
-tokens_purchased
-payment_method
-payment_status
-created_at
----------------------
+    @ManyToOne
+    @JoinColumn(name = "username", nullable = false, referencedColumnName = "username")
+    private User user;
 
-user_wallet
--------------
-wallet_id
-user_id
-tokens_available
-tokens_spent
-updated_at
----------------------
+    private String title;
+    private int priority;
+    private String category;
+    private String description;
 
-token_purchase
-------------------------
-purchase_id
-user_id
-payment_gateway_tx
-amount_paid
-tokens_received
-payment_method
-payment_status
-created_at
-----------------------------
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+}
 
-token_feature_usage
-------------------------
-usage_id
-user_id
-item_id
-wanted_item_id
-feature_type
-tokens_used
-description
-created_at
------------------------------
+@Table(name = "swap_proposals")
+public class Swap {
 
-token_swap_usage
-------------------------
-swap_usage_id
-swap_id
-user_id
-counterparty_user_id
-item_id
-tokens_used
-tokens_received
-usage_type ENUM('ESCROW_HOLD','ESCROW_RELEASE','ESCROW_SETTLEMENT','TOKEN_ADJUSTMENT_SWAP') NOT NULL
-created_at
-----------------------------
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "swap_id", nullable = false)
+    private Long swapId;
+
+    @ManyToOne
+    @JoinColumn(name = "sender", nullable = false, referencedColumnName = "username")
+    private User sender;
+
+    @ManyToOne
+    @JoinColumn(name = "receiver", nullable = false, referencedColumnName = "username")
+    private User receiver;
+
+    @ManyToOne
+    @JoinColumn(name = "offered_item", nullable = false, referencedColumnName = "offered_item_id")
+    private OfferedItem offeredItem;
+
+    @ManyToOne
+    @JoinColumn(name = "requested_item", nullable = false, referencedColumnName = "offered_item_id")
+    private OfferedItem requestedItem;
+
+    private String status;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+    @Column(name = "completed_at", nullable = true)
+    private LocalDateTime completedAt;
+}
+
+@Table(name = "ratings")
+public class Rating {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "rating_id", nullable = false)
+    private Long ratingId;
+
+    @ManyToOne
+    @JoinColumn(name = "rater_id", nullable = false, referencedColumnName = "username")
+    private User rater;
+
+    @ManyToOne
+    @JoinColumn(name = "rated_user_id", nullable = false, referencedColumnName = "username")
+    private User ratedUser;
+
+    private int score;
+    private String review;
+
+    @ManyToOne
+    @JoinColumn(name = "swap_id", nullable = false, referencedColumnName = "swap_id")
+    private Swap swap;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+}
+
+@Table(name = "reports")
+public class Report {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "report_id", nullable = false)
+    private Long reportId;
+
+    @ManyToOne
+    @JoinColumn(name = "reporter_id", nullable = false, referencedColumnName = "username")
+    private User reporter;
+
+    @ManyToOne
+    @JoinColumn(name = "reported_id", nullable = false, referencedColumnName = "username")
+    private User reported;
+
+    @ManyToOne
+    @JoinColumn(name = "swap_id", nullable = false, referencedColumnName = "swap_id")
+    private Swap swap;
+
+    private String reason;
+    private String status;
+}
+
+@Table(name = "notifications")
+public class Notification {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "notification_id", nullable = false)
+    private Long notificationId;
+
+    @ManyToOne
+    @JoinColumn(name = "username", nullable = false, referencedColumnName = "username")
+    private User user;
+    
+    private String type;
+    private String message;
+
+    @Column(name = "is_read")
+    private boolean isRead;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+}
+
+@Table(name = "tokens_payment")
+public class TokenPayment {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "payment_id")
+    private Long paymentId;
+
+    @ManyToOne
+    @JoinColumn(name = "username", nullable = false, referencedColumnName = "username")
+    private User user;
+    @Column(name = "transaction_id", nullable = false)
+    private String transactionId;
+    @Column(name = "amount_paid", nullable = false)
+    private double amountPaid;
+    @Column(name = "token_purchased", nullable = false)
+    private int tokensPurchased;
+    @Column(name = "payment_method", nullable = false)
+    private String paymentMethod;
+    @Column(name = "payment_status", nullable = false)
+    private String paymentStatus;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+}
+
+@Table(name = "user_wallet")
+public class UserWallet {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "wallet_id", nullable = false)
+    private Long walletId;
+
+    @OneToOne
+    @JoinColumn(name = "username", nullable = false, referencedColumnName = "username")
+    private User user;
+    @Column(name = "tokens_available", nullable = false)
+    private int tokensAvailable;
+    @Column(name = "tokens_spent", nullable = false)
+    private int tokensSpent;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+}
+
+@Table(name = "token_feature_usage")
+public class TokenFeatureUsage {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "usage_id")
+    private Long usageId;
+
+    @ManyToOne
+    @JoinColumn(name = "username", nullable = false, referencedColumnName = "username")
+    private User user;
+
+    @ManyToOne
+    @JoinColumn(name = "offered_item_id", nullable = true, referencedColumnName = "offered_item_id")
+    private OfferedItem offeredItem;
+
+    @ManyToOne
+    @JoinColumn(name = "wanted_item_id", nullable = true, referencedColumnName = "wanted_item_id")
+    private WantedItem wantedItem;
+    @Column(name = "feature_type")
+    private String featureType;
+    @Column(name = "token_used")
+    private int tokensUsed;
+    private String description;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+}
+
+@Table(name = "token_swap_usage")
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class TokenSwapUsage {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "swap_usage_id", nullable = false)
+    private Long swapUsageId;
+
+    @ManyToOne
+    @JoinColumn(name = "swap_id", nullable = false, referencedColumnName = "swap_id")
+    private Swap swap;
+
+    @ManyToOne
+    @JoinColumn(name = "username", nullable = false, referencedColumnName = "username")
+    private User user;
+
+    @ManyToOne
+    @JoinColumn(name = "counterparty_user_id", nullable = false, referencedColumnName = "username")
+    private User counterparty;
+
+    @OneToOne
+    @JoinColumn(name = "offered_item_id", nullable = false, referencedColumnName = "offered_item_id")
+    private OfferedItem offeredItem;
+    @Column(name = "tokens_used", nullable = false)
+    private int tokensUsed;
+    @Column(name = "tokens_recieved", nullable = false)
+    private int tokensReceived;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "usage_type", nullable = false)
+    private UsageType usageType;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    public enum UsageType {
+        ESCROW_HOLD,
+        ESCROW_RELEASE,
+        ESCROW_SETTLEMENT,
+        TOKEN_ADJUSTMENT_SWAP
+    }
+}
 
 
 

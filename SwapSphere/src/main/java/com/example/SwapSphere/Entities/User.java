@@ -28,14 +28,14 @@ public class User {
     private String contact;
     @Column(name = "role", nullable = false)
     private String role;
-    @Column(name = "tokens", nullable = true)
-    private int tokens;
     @Column(name = "rating", nullable = true)
-    private int rating;
+    private double rating;
     @Column(name = "created_at", nullable = false)
     private Timestamp createdAt;
-    @Column(name = "longitude", nullable = false)
-    private Double locLat;
     @Column(name = "latitude", nullable = false)
+    private Double locLat;
+    @Column(name = "longitude", nullable = false)
     private Double locLong;
+    @Column(name = "profile_pic_url", nullable = true)
+    private String profilePicUrl;
 }

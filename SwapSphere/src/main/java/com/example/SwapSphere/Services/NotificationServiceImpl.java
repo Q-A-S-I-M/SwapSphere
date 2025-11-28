@@ -14,14 +14,15 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Autowired
     private JdbcTemplate template;
+    
     @Override
-    public List<Notification> getByUser(Long userId) {
+    public List<Notification> getByUser(String username) {
         String sql = "SELECT * FROM notifications WHERE username = ? ORDER BY created_at DESC";
 
         return template.query(
                 sql,
                 new BeanPropertyRowMapper<>(Notification.class),
-                userId
+                username
         );
     }
 
@@ -29,5 +30,11 @@ public class NotificationServiceImpl implements NotificationService {
     public void markAsRead(Long id) {
         String sql = "UPDATE notifications SET is_read = TRUE WHERE notification_id = ?";
         template.update(sql, id);
+    }
+
+    @Override
+    public void addNotification(Notification notification) {
+        String sql = "INSERT INTO notifications (username, type, message, is_read, created_at) VALUES (?, ?, ?, FALSE, NOW())";
+        template.update(sql, notification.getUser().getUsername(), notification.getType(), notification.getMessage());
     }
 }

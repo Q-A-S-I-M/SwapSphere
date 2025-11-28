@@ -23,20 +23,19 @@ public class UserServiceImpl implements UserService{
         String query = "SELECT COUNT(*) FROM Users WHERE username = ?";
         int count = template.queryForObject(query, Integer.class, user.getUsername());
         if(count ==0 ){
-            query = "INSERT INTO Users (username, full_name, email, password, contact, role, tokens, rating, created_at, longitude, latitude) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            user.setTokens(0);
+            query = "INSERT INTO Users (username, full_name, email, password, contact, role, rating, created_at, longitude, latitude, profile_pic_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             user.setRating(0);
             user.setCreatedAt(new Timestamp(System.currentTimeMillis()));
-            template.update(query, user.getUsername(), user.getFullName(), user.getEmail(), hashPassword, user.getContact(), user.getRole(), user.getTokens(), user.getRating(), user.getCreatedAt(), user.getLocLong(), user.getLocLat());
+            template.update(query, user.getUsername(), user.getFullName(), user.getEmail(), hashPassword, user.getContact(), user.getRole(), user.getRating(), user.getCreatedAt(), user.getLocLong(), user.getLocLat(), user.getProfilePicUrl());
         }else{
             throw new RuntimeException("Username already exists!");
         }
 
     }
     @Override
-    public User getUserById(Long id) {
+    public User getUserById(String username) {
         String sql = "SELECT * FROM Users WHERE username = ?";
-        return template.queryForObject(sql, new BeanPropertyRowMapper<>(User.class), id);
+        return template.queryForObject(sql, new BeanPropertyRowMapper<>(User.class), username);
     }
 
     @Override
@@ -46,17 +45,17 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public User updateUser(Long id, User user) {
+    public User updateUser(String username, User user) {
         String sql = """
             UPDATE users SET 
                 full_name = ?, 
                 email = ?, 
                 contact = ?, 
-                role = ?, 
-                tokens = ?, 
+                role = ?,
                 rating = ?, 
                 longitude = ?, 
-                latitude = ? 
+                latitude = ?,
+                profile_pic_url = ?
             WHERE username = ?
         """;
 
@@ -65,20 +64,20 @@ public class UserServiceImpl implements UserService{
                 user.getEmail(),
                 user.getContact(),
                 user.getRole(),
-                user.getTokens(),
                 user.getRating(),
                 user.getLocLong(),
                 user.getLocLat(),
-                id
+                user.getProfilePicUrl(),
+                username
         );
 
-        return getUserById(id);
+        return getUserById(username);
     }
 
     @Override
-    public void deleteUser(Long id) {
+    public void deleteUser(String username) {
         String sql = "DELETE FROM Users WHERE username = ?";
-        template.update(sql, id);
+        template.update(sql, username);
     }
 
 }
