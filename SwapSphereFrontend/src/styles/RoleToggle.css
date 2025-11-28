@@ -1,0 +1,25 @@
+.role-toggle {
+  display: flex;
+  background: #101010;
+  border: 1px solid #333;
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.role-toggle button {
+  flex: 1;
+  padding: 0.7rem;
+  color: #888;
+  background: none;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.role-toggle button:hover {
+  background: #181818;
+}
+
+.role-toggle button.active {
+  background: var(--color-gold);
+  color: #000;
+}
