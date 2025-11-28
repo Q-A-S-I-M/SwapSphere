@@ -1,22 +1,18 @@
-import React from 'react'
-import '../styles/dashboard.css'
+import React from "react";
+import "../styles/DashboardPage.css";
 
-export default function DashboardPage(){
+export default function DashboardPage() {
   return (
-    <div className="page">
-      <header className="dashboard-header">
-        <div className="container">
-          <h1>Welcome to SwapSphere Dashboard</h1>
-          <p className="muted">This is a placeholder dashboard. We'll wire features later (listings, swaps, tokens, etc.).</p>
-        </div>
-      </header>
+    <div className="dashboard-page">
+      <div className="card white-card">
+        <h2>Welcome to SwapSphere</h2>
+        <p>Overview & quick stats will appear here.</p>
+      </div>
 
-      <main className="container dashboard-main">
-        <div className="card">
-          <h3>Overview</h3>
-          <p className="muted">No data yet — UI is ready. Start implementing features like items, swaps, tokens.</p>
-        </div>
-      </main>
+      <div className="grid">
+        <div className="card white-card">Portfolio (placeholder)</div>
+        <div className="card white-card">Recent Activity (placeholder)</div>
+      </div>
     </div>
-  )
+  );
 }

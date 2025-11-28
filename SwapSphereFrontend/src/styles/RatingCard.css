@@ -1,0 +1,31 @@
+.rating-card{
+  background:#fff9f0;
+  border-radius:10px;
+  border:1px solid #d4af37;
+  padding:12px 16px;
+  display:flex;
+  gap:12px;
+  align-items:flex-start;
+  position:relative;
+}
+.rating-left{width:180px;display:flex;flex-direction:row;align-items:center;gap:10px;}
+.rating-avatar{
+  width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid #d4af37;
+}
+.rating-avatar-fallback{
+  width:48px;height:48px;border-radius:50%;background:#b8860b;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;
+}
+.rater{font-weight:700;color:#8b6508;}
+.score{color:#555;font-size:13px;}
+
+.rating-right{flex:1;color:#333;}
+.review{line-height:1.5;color:#222;}
+
+.rating-date{
+  position:absolute;
+  right:12px;
+  top:12px;
+  font-size:12px;
+  color:#a67c00;
+  font-weight:600;
+}

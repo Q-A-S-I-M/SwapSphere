@@ -1,0 +1,12 @@
+.topbar{
+  height:60px;
+  background:#000000;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 20px;
+  border-bottom:1px solid rgba(255,255,255,0.03);
+}
+.topbar-left{color:var(--gold);font-weight:700;font-size:30px;}
+.topbar-right{color:var(--muted);font-size:14px;}
+.username{color:#fff;font-weight:600;margin-left:6px;}

@@ -1,0 +1,19 @@
+.center-page{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:28px;}
+.split{display:flex;max-width:1100px;width:100%;gap:40px;}
+.left{flex:1;display:flex;flex-direction:column;justify-content:center;color:var(--text);padding:8px;}
+.brand{font-size:3rem;color:var(--gold);font-weight:800;margin-bottom:8px;}
+.brand-sub{color:var(--muted);font-size:1.05rem;max-width:520px;}
+.right{flex:1;display:flex;align-items:center;justify-content:center;}
+.card{background:rgba(20,20,20,0.88);padding:22px;border-radius:12px;min-width:320px;max-width:420px;}
+.login-form, .register-form{display:flex;flex-direction:column;gap:12px;margin-top:6px;}
+.input-field{background:#111;border:1px solid #222;padding:10px;border-radius:8px;color:#eee;}
+.btn-primary{margin-top:6px;}
+.role-toggle{display:flex;background:#111;border-radius:999px;padding:4px;border:1px solid #222;overflow:hidden;}
+.role-toggle button{flex:1;padding:8px;border:none;background:transparent;color:#aaa;cursor:pointer;border-radius:999px;}
+.role-toggle button.active{background:var(--gold);color:#000;font-weight:700;}
+.link-btn{background:none;border:none;color:var(--gold);cursor:pointer;}
+.fade-wrapper{transition:opacity 0.28s ease;}
+.fade-in{opacity:1;}
+.fade-out{opacity:0;}
+.form-error{background:#400;border:1px solid #a00;color:#f99;padding:8px;border-radius:6px;margin-top:6px;}
+.form-success{background:#063a06;border:1px solid #1f8a1f;color:#7eff7e;padding:8px;border-radius:6px;margin-top:6px;}
