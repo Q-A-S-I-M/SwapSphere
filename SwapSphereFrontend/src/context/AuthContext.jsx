@@ -60,15 +60,20 @@ export function AuthProvider({ children }) {
           }
         ]
       };
+      // Initialize user on first mount if not present
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setUser(example);
     }
-  }, []); // run once
+  }, [user]);
 
   useEffect(() => {
     if (user) {
       try {
         localStorage.setItem("ss_user_full", JSON.stringify(user));
-      } catch {}
+      } catch (err) {
+        // Silently fail if localStorage is unavailable
+        console.warn("Failed to save user to localStorage:", err);
+      }
     }
   }, [user]);
 

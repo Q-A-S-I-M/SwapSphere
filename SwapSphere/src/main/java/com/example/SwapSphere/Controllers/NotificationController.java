@@ -20,9 +20,9 @@ public class NotificationController {
     @Autowired
     private NotificationService notificationService;
 
-    @GetMapping("/{userId}")
-    public ResponseEntity<List<Notification>> getNotifications(@PathVariable Long userId) {
-        return ResponseEntity.ok(notificationService.getByUser(userId));
+    @GetMapping("/{username}")
+    public ResponseEntity<List<Notification>> getNotifications(@PathVariable String username) {
+        return ResponseEntity.ok(notificationService.getByUser(username));
     }
 
     @PutMapping("/{id}/read")

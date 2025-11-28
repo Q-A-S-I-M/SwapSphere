@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import "../styles/RequestCard.css";
 
 /**
@@ -15,16 +15,21 @@ export default function RequestCard({ open, onClose, targetItem, myItems = [], m
   const [selectedIds, setSelectedIds] = useState([]);
   const [tokensOffer, setTokensOffer] = useState("");
   const [error, setError] = useState("");
+  const [prevOpen, setPrevOpen] = useState(open);
 
-  // reset when opened
+  // reset when opened (using prevOpen to detect change)
   useEffect(() => {
-    if (open) {
+    if (open && !prevOpen) {
+      // Reset form state when modal opens - valid use case for resetting form on open
+      /* eslint-disable react-hooks/set-state-in-effect */
       setMethod("Both");
       setSelectedIds([]);
       setTokensOffer("");
       setError("");
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
-  }, [open]);
+    setPrevOpen(open);
+  }, [open, prevOpen]);
 
   const toggleSelect = (id) => {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));

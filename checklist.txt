@@ -1,0 +1,17 @@
+To-do:
+fetch user *
+update user *
+return offered *
+show item *
+return wanted*
+show item*
+add offered*
+add wanted*
+return reviews*
+show review*
+return notifications*
+set as read*
+request accept*
+request reject*
+show requests*
+open request*

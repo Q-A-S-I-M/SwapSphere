@@ -46,7 +46,7 @@ public class TokenSwapUsage {
     private OfferedItem offeredItem;
     @Column(name = "tokens_used", nullable = false)
     private int tokensUsed;
-    @Column(name = "tokens_recieved", nullable = false)
+    @Column(name = "tokens_received", nullable = false)
     private int tokensReceived;
 
     @Enumerated(EnumType.STRING)

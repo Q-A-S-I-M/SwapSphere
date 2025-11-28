@@ -38,6 +38,15 @@ public class SwapController {
         return ResponseEntity.ok(swapService.getAllSwaps());
     }
 
+    @GetMapping("/sender/{sender}")
+    public ResponseEntity<List<Swap>> getAllSwapsForSender(@PathVariable String sender) {
+        return ResponseEntity.ok(swapService.getAllSwapsForSender(sender));
+    }
+    @GetMapping("/reciever/{reciever}")
+    public ResponseEntity<List<Swap>> getAllSwapsForReciver(@PathVariable String reciever) {
+        return ResponseEntity.ok(swapService.getAllSwapsForReciever(reciever));
+    }
+
     @PutMapping("/{id}/status")
     public ResponseEntity<Swap> updateSwapStatus(@PathVariable Long id, @RequestParam String status) {
         return ResponseEntity.ok(swapService.updateStatus(id, status));

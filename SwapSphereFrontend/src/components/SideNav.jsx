@@ -1,10 +1,9 @@
 import React from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import "../styles/SideNav.css";
 import logo from '../assets/logo.jpg';
 
 export default function SideNav() {
-  const location = useLocation();
   const items = [
     { label: "Dashboard", to: "/dashboard" },
     { label: "Profile", to: "/profile" },

@@ -32,6 +32,8 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!navigator.geolocation) {
+      // Initialize location permission state
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLocationAllowed(false);
       return;
     }

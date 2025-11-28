@@ -25,6 +25,6 @@ public class Image {
     @Column(name = "img_url")
     private String imgURL;
     @ManyToOne
-    @JoinColumn(name = "related_item", nullable = false, referencedColumnName = "offered_item_id")
+    @JoinColumn(name = "offered_item_id", nullable = false, referencedColumnName = "offered_item_id")
     private OfferedItem item;
 }

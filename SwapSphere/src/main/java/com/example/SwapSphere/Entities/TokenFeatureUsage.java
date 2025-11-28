@@ -41,7 +41,6 @@ public class TokenFeatureUsage {
     private String featureType;
     @Column(name = "token_used")
     private int tokensUsed;
-    private String description;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

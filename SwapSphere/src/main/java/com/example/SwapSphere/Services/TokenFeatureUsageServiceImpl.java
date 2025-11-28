@@ -20,8 +20,8 @@ public class TokenFeatureUsageServiceImpl implements TokenFeatureUsageService {
 
         String sql = """
             INSERT INTO token_feature_usage
-            (username, offered_item_id, wanted_item_id, feature_type, tokens_used, description, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            (username, offered_item_id, wanted_item_id, feature_type, tokens_used, created_at)
+            VALUES (?, ?, ?, ?, ?, ?)
         """;
 
         template.update(sql,
@@ -30,7 +30,6 @@ public class TokenFeatureUsageServiceImpl implements TokenFeatureUsageService {
                 usage.getWantedItem().getWantedItemId(),
                 usage.getFeatureType(),
                 usage.getTokensUsed(),
-                usage.getDescription(),
                 LocalDateTime.now()
         );
 

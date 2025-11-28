@@ -87,7 +87,7 @@ export default function ProfilePage() {
     []
   );
 
-  const [offered, setOffered] = useState(initialOffered);
+  const [offered] = useState(initialOffered);
   const [wanted, setWanted] = useState(initialWanted);
   const [ratings] = useState(initialRatings);
 
@@ -106,7 +106,6 @@ export default function ProfilePage() {
     setEditing(false);
   };
 
-  const handleDeleteOffered = (id) => setOffered((p) => p.filter((x) => x.id !== id));
   const handleDeleteWanted = (id) => setWanted((p) => p.filter((x) => x.id !== id));
 
   const openRequest = (item) => {

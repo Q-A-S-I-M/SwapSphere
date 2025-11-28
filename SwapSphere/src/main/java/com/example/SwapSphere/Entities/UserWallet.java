@@ -33,6 +33,8 @@ public class UserWallet {
     private int tokensAvailable;
     @Column(name = "tokens_spent", nullable = false)
     private int tokensSpent;
+    @Column(name = "tokens_locked", nullable = false)
+    private int tokensLocked;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;

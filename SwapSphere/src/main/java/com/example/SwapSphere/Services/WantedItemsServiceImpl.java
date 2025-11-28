@@ -35,9 +35,9 @@ public class WantedItemsServiceImpl implements WantedItemsService {
     }
 
     @Override
-    public List<WantedItem> getAll() {
-        String sql = "SELECT * FROM wanted_items";
-        return template.query(sql, new BeanPropertyRowMapper<>(WantedItem.class));
+    public List<WantedItem> getAllByUser(String username) {
+        String sql = "SELECT * FROM wanted_items WHERE username = ?";
+        return template.query(sql, new BeanPropertyRowMapper<>(WantedItem.class), username);
     }
 
     @Override

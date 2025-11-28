@@ -37,10 +37,11 @@ public class Swap {
     @ManyToOne
     @JoinColumn(name = "offered_item", nullable = false, referencedColumnName = "offered_item_id")
     private OfferedItem offeredItem;
+    private int tokens;
 
     @ManyToOne
-    @JoinColumn(name = "requested_item", nullable = false, referencedColumnName = "wanted_item_id")
-    private WantedItem requestedItem;
+    @JoinColumn(name = "requested_item", nullable = false, referencedColumnName = "offered_item_id")
+    private OfferedItem requestedItem;
 
     private String status;
 
