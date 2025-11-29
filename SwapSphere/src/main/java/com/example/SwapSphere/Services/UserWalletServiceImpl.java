@@ -2,11 +2,13 @@ package com.example.SwapSphere.Services;
 
 import java.sql.Timestamp;
 
+import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import com.example.SwapSphere.Entities.TokenSwapUsage;
 import com.example.SwapSphere.Entities.UserWallet;
 
 @Service
@@ -14,6 +16,12 @@ public class UserWalletServiceImpl implements UserWalletService {
 
     @Autowired
     private JdbcTemplate template;
+    @Autowired
+    TokenSwapUsageService tokenSwapUsageService;
+    @Autowired
+    UserService userService;
+    @Autowired
+    NotificationService notificationService;
 
     @Override
     public UserWallet getWalletByUserId(String userId) {
@@ -52,7 +60,7 @@ public class UserWalletServiceImpl implements UserWalletService {
     }
 
     @Override
-    public UserWallet buyTokens(String username, int tokens) {
+    public UserWallet addTokens(String username, int tokens) {
         UserWallet wallet = getWalletByUserId(username);
         String sql = "UPDATE user_wallet SET tokens_available = ? WHERE username = ?";
         wallet.setTokensAvailable(tokens+wallet.getTokensAvailable());
@@ -91,7 +99,16 @@ public class UserWalletServiceImpl implements UserWalletService {
     public void transferTokens(String username1, String username2, int tokens) {
         tokensUnlock(username1, tokens);
         spendTokens(username1, tokens);
-        buyTokens(username2, tokens);
+        addTokens(username2, tokens);
+        tokenSwapUsageService.addUsage(new TokenSwapUsage(null, userService.getUserById(username1), userService.getUserById(username2), tokens, null));
+        notificationService.tokenTransfer(username1, userService.getUserById(username2), tokens);
+    }
+
+    @Override
+    public UserWallet buyTokens(String username, int tokens){
+        addTokens(username, tokens);
+        notificationService.tokensBought(userService.getUserById(username), tokens);
+        return getWalletByUserId(username);
     }
 
     

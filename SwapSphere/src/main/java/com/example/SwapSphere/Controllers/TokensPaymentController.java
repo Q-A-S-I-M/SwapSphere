@@ -27,7 +27,7 @@ public class TokensPaymentController {
     }
 
     @GetMapping("/{userId}")
-    public ResponseEntity<List<TokenPayment>> getUserPayments(@PathVariable Long userId) {
+    public ResponseEntity<List<TokenPayment>> getUserPayments(@PathVariable String userId) {
         return ResponseEntity.ok(tokensPaymentService.getByUser(userId));
     }
 }

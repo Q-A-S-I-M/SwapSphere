@@ -6,9 +6,10 @@ public interface UserWalletService {
 
     UserWallet getWalletByUserId(String userId);
     UserWallet lockTokens(String username, int tokens);
-    UserWallet buyTokens(String username, int tokens);
+    UserWallet addTokens(String username, int tokens);
     UserWallet spendTokens(String username, int tokens);
     UserWallet tokensUnlock(String username, int tokens);
     void transferTokens(String username, String username2, int tokens);
+    UserWallet buyTokens(String username, int tokens);
     
 }

@@ -42,7 +42,7 @@ public class TokensPaymentServiceImpl implements TokensPaymentService {
     }
 
     @Override
-    public List<TokenPayment> getByUser(Long userId) {
+    public List<TokenPayment> getByUser(String userId) {
 
         String sql = "SELECT * FROM tokens_payment WHERE username = ? ORDER BY created_at DESC";
 

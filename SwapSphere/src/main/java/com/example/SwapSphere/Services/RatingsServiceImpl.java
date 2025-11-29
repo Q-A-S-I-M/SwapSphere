@@ -17,6 +17,8 @@ public class RatingsServiceImpl implements RatingsService {
     private JdbcTemplate template;
     @Autowired
     private UserService userService;
+    @Autowired
+    NotificationService notificationService;
     @Override
     public Rating addRating(Rating rating) {
 
@@ -39,6 +41,7 @@ public class RatingsServiceImpl implements RatingsService {
         User user = userService.getUserById(rating.getRatedUser().getUsername());
         user.setRating(ratingScore);
         userService.updateUser(user.getUsername(), user);
+        notificationService.generateReviewNotification(rating);
         return rating;
     }
     @Override

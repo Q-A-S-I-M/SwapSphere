@@ -41,8 +41,8 @@ export default function ProfilePage() {
         description: "A neat set of vintage coins from 1900s. Good condition.",
         category: "Collectibles",
         condition: "Good",
-        priority: "High",
-        status: "active",
+        priority: 23,
+        status: "Available",
         createdAt: "2025-11-01T10:15:00Z"
       }
     ],
@@ -57,8 +57,8 @@ export default function ProfilePage() {
         description: "Looking for the limited edition version.",
         category: "Games",
         condition: "Any",
-        priority: "Low",
-        status: "open",
+        priority: 0,
+        status: "Available",
         createdAt: "2025-10-05T08:30:00Z"
       }
     ],

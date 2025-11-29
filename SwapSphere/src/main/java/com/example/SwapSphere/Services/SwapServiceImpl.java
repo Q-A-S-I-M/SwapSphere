@@ -9,7 +9,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import com.example.SwapSphere.Entities.Swap;
-import com.example.SwapSphere.Entities.TokenSwapUsage;
 import com.example.SwapSphere.RowMappers.SwapRowMapper;
 
 @Service
@@ -24,7 +23,7 @@ public class SwapServiceImpl implements SwapService {
     @Autowired
     UserWalletService userWalletService;
     @Autowired
-    TokenSwapUsageService tokenSwapUsageService;
+    NotificationService notificationService;
 
     @Override
     public Swap createSwap(Swap swap) {
@@ -63,22 +62,8 @@ public class SwapServiceImpl implements SwapService {
     }
     @Override
     public List<Swap> getAllSwapsForReciever(String username) {
-        String sql = "SELECT * FROM swap_proposals WHERE reciever = ?";
-        List<Swap> swap_proposals = template.query(sql, new BeanPropertyRowMapper<>(Swap.class), username);
-        sql = "SELECT sender FROM swap_proposals WHERE swap_id = ?";
-        for (Swap swap : swap_proposals) {
-            swap.setSender(userService.getUserById(template.queryForObject(sql, String.class, swap.getSwapId())));
-        }
-        return swap_proposals;
-    }
-    @Override
-    public List<Swap> getAllSwapsForSender(String username) {
-        String sql = "SELECT * FROM swap_proposals WHERE sender = ?";
-        List<Swap> swap_proposals = template.query(sql, new BeanPropertyRowMapper<>(Swap.class), username);
-        sql = "SELECT reciever FROM swap_proposals WHERE swap_id = ?";
-        for (Swap swap : swap_proposals) {
-            swap.setSender(userService.getUserById(template.queryForObject(sql, String.class, swap.getSwapId())));
-        }
+        String sql = "SELECT * FROM swap_proposals WHERE reciever = ? AND status = 'PENDING'";
+        List<Swap> swap_proposals = template.query(sql, new SwapRowMapper(), username);
         return swap_proposals;
     }
 
@@ -101,16 +86,21 @@ public class SwapServiceImpl implements SwapService {
                 completedTime,
                 id);
         Swap swap = getSwapById(id);
-        if(status.equalsIgnoreCase("COMPLETED") && swap.getTokens()>0){
-            userWalletService.transferTokens(swap.getSender().getUsername(), swap.getReceiver().getUsername(), swap.getTokens());
-            tokenSwapUsageService.addUsage(new TokenSwapUsage(null, swap, swap.getSender(), swap.getReceiver(), swap.getRequestedItem(), swap.getTokens(), swap.getTokens(), null, completedTime));
-        }
+        notificationService.generateNotificationForSwaps(swap, status);
         return swap;
     }
 
     @Override
     public List<Swap> getSwapHistory(String username) {
-        String sql = "SELECT * FROM swap_proposals username = ?";
-        return template.query(sql, new SwapRowMapper(), username);
+        String sql = "SELECT * FROM swap_proposals WHERE (sender = ? OR reciever = ?) AND status != 'PENDING' ORDER BY completed_at DESC";
+        List<Swap> swap_proposals = template.query(sql, new SwapRowMapper(), username, username);
+        return swap_proposals;
+    }
+
+    @Override
+    public List<Swap> getAllSwapsForSender(String username) {
+        String sql = "SELECT * FROM swap_proposals WHERE sender = ? AND status = 'PENDING'";
+        List<Swap> swap_proposals = template.query(sql, new SwapRowMapper(), username, username);
+        return swap_proposals;
     }
 }

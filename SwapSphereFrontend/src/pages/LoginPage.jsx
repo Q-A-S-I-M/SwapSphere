@@ -13,6 +13,8 @@ export default function LoginPage() {
 
   const [regUser, setRegUser] = useState("");
   const [regPass, setRegPass] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [contact, setContact] = useState("");
   const [email, setEmail] = useState("");
   const [country, setCountry] = useState("");
   const [city, setCity] = useState("");
@@ -92,7 +94,7 @@ export default function LoginPage() {
       return;
     }
 
-    if (!regUser || !regPass || !email || !country || !city) {
+    if (!regUser || !regPass || !email || !country || !city || !fullName || !contact) {
       setErrorMessage("Please fill in all registration fields.");
       return;
     }
@@ -106,6 +108,8 @@ export default function LoginPage() {
       setSuccessMessage("Registration successful! Please log in.");
       setRegUser("");
       setRegPass("");
+      setContact("");
+      setFullName("");
       setEmail("");
       setCountry("");
       setCity("");
@@ -154,9 +158,11 @@ export default function LoginPage() {
 
             {mode === "register" && (
               <form onSubmit={handleRegister} className="register-form">
+                <input type="text" placeholder="Full name" className="input-field" value={fullName} onChange={(e) => setFullName(e.target.value)} />
                 <input type="text" placeholder="Username" className="input-field" value={regUser} onChange={(e) => setRegUser(e.target.value)} />
                 <input type="password" placeholder="Password" className="input-field" value={regPass} onChange={(e) => setRegPass(e.target.value)} />
                 <input type="text" placeholder="Email Address" className="input-field" value={email} onChange={(e) => setEmail(e.target.value)} />
+                <input type="text" placeholder="Contact" className="input-field" value={contact} onChange={(e) => setContact(e.target.value)} />
                 <input type="text" placeholder="Country" className="input-field" value={country} onChange={(e) => setCountry(e.target.value)} />
                 <input type="text" placeholder="City" className="input-field" value={city} onChange={(e) => setCity(e.target.value)} />
 

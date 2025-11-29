@@ -8,6 +8,6 @@ public interface TokensPaymentService {
 
     TokenPayment addPayment(TokenPayment payment);
 
-    List<TokenPayment> getByUser(Long userId);
+    List<TokenPayment> getByUser(String userId);
     
 }

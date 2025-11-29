@@ -8,6 +8,6 @@ public interface TokenSwapUsageService {
 
     TokenSwapUsage addUsage(TokenSwapUsage usage);
 
-    List<TokenSwapUsage> getBySwap(Long swapId);
+    List<TokenSwapUsage> getBySwapUsage(Long swapId);
     
 }

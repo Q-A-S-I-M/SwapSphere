@@ -16,8 +16,6 @@ public class TokenSwapUsageRowMapper implements RowMapper<TokenSwapUsage> {
     private SwapService swapService;
     @Autowired
     private UserService userService;
-    @Autowired
-    private OfferedItemsService offeredItemsService;
 
     @Override
     public TokenSwapUsage mapRow(ResultSet rs, int rowNum) throws SQLException {
@@ -26,14 +24,14 @@ public class TokenSwapUsageRowMapper implements RowMapper<TokenSwapUsage> {
 
         t.setSwapUsageId(rs.getLong("swap_usage_id"));
 
-        t.setSwap(swapService.getSwapById(rs.getLong("swap_id")));
+        // t.setSwap(swapService.getSwapById(rs.getLong("swap_id")));
         t.setUser(userService.getUserById(rs.getString("username")));
         t.setCounterparty(userService.getUserById(rs.getString("counterparty_user_id")));
-        t.setOfferedItem(offeredItemsService.getItemById(rs.getLong("offered_item_id")));
+        // t.setOfferedItem(offeredItemsService.getItemById(rs.getLong("offered_item_id")));
 
         t.setTokensUsed(rs.getInt("tokens_used"));
-        t.setTokensReceived(rs.getInt("tokens_recieved"));
-        t.setUsageType(TokenSwapUsage.UsageType.valueOf(rs.getString("usage_type")));
+        // t.setTokensReceived(rs.getInt("tokens_recieved"));
+        // t.setUsageType(TokenSwapUsage.UsageType.valueOf(rs.getString("usage_type")));
         t.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
 
         return t;
