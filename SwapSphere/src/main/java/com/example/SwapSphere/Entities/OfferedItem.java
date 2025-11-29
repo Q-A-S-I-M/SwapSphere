@@ -33,6 +33,7 @@ public class OfferedItem {
     private String title;
     private String description;
     private String category;
+    @Column(name = "item_condition", nullable = false)
     private String condition;
     private int priority;
     private String status;

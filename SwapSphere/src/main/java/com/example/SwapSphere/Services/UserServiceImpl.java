@@ -9,7 +9,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.example.SwapSphere.DTOs.Login_Request;
 import com.example.SwapSphere.Entities.User;
+import com.example.SwapSphere.RowMappers.UserRowMapper;
 
 
 @Service
@@ -78,6 +80,23 @@ public class UserServiceImpl implements UserService{
     public void deleteUser(String username) {
         String sql = "DELETE FROM Users WHERE username = ?";
         template.update(sql, username);
+    }
+    @Override
+    public User login(Login_Request login_Request) {
+        String hashPassword = passwordEncoder.encode(login_Request.password);
+        String query = "SELECT COUNT(*) FROM users WHERE username = ?";
+        int count = template.queryForObject(query, Integer.class, login_Request.username);
+        if(count == 0 ){
+            throw new RuntimeException("User doesnt exists!");
+        }else{
+            query = "SELECT * FROM users WHERE username = ?";
+            User user = template.queryForObject(query, new UserRowMapper(), login_Request.username);
+            if(user.getPassword().equals(hashPassword)){
+                return user;
+            }else{
+                throw new RuntimeException("Wrong Password!");
+            }
+        }
     }
 
 }

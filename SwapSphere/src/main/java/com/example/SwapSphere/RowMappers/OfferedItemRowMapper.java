@@ -26,7 +26,7 @@ public class OfferedItemRowMapper implements RowMapper<OfferedItem> {
         item.setTitle(rs.getString("title"));
         item.setDescription(rs.getString("description"));
         item.setCategory(rs.getString("category"));
-        item.setCondition(rs.getString("condition"));
+        item.setCondition(rs.getString("item_condition"));
         item.setPriority(rs.getInt("priority"));
         item.setStatus(rs.getString("status"));
         item.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());

@@ -28,12 +28,12 @@ public class WantedItemsController {
         return ResponseEntity.ok(wantedItemsService.createWantedItem(item));
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/get-item/{id}")
     public ResponseEntity<WantedItem> getWantedItem(@PathVariable Long id) {
         return ResponseEntity.ok(wantedItemsService.getById(id));
     }
 
-    @GetMapping("/{username}")
+    @GetMapping("/user-item/{username}")
     public ResponseEntity<List<WantedItem>> getAllWantedItemsByUser(@PathVariable String username) {
         return ResponseEntity.ok(wantedItemsService.getAllByUser(username));
     }

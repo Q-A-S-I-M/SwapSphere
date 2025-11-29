@@ -18,7 +18,7 @@ public class OfferedItemsServiceImpl implements OfferedItemsService {
     @Override
     public OfferedItem createItem(OfferedItem item) {
 
-        String sql = "INSERT INTO offered_items (username, title, description, category, condition, priority, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())";
+        String sql = "INSERT INTO offered_items (username, title, description, category, item_condition, priority, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())";
 
         template.update(sql,
                 item.getUser().getUsername(),

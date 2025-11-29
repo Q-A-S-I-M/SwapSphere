@@ -30,12 +30,12 @@ public class OfferedItemsController {
         return ResponseEntity.ok(offeredItemsService.createItem(item));
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/get-item/{id}")
     public ResponseEntity<OfferedItemWithImages> getItem(@PathVariable Long id) {
         return ResponseEntity.ok(offeredItemsService.getItemByIdWithImages(id));
     }
 
-    @GetMapping("/{username}")
+    @GetMapping("/user-item/{username}")
     public ResponseEntity<List<OfferedItemWithImages>> getAllItemsByUser(@PathVariable String username) {
         return ResponseEntity.ok(offeredItemsService.getAllItemsByUser(username));
     }
