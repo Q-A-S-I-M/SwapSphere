@@ -1,6 +1,5 @@
 package com.example.SwapSphere.Controllers;
 
-import com.example.SwapSphere.DTOs.Login_Request;
 import com.example.SwapSphere.Entities.User;
 import com.example.SwapSphere.Services.UserService;
 
@@ -28,16 +27,6 @@ public class UserController {
         try {
             userService.register(user);
             return ResponseEntity.ok("User registered successfully");
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body("Registration failed: " + e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("An unexpected error occurred during registration.");
-        }
-    }
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Login_Request login_Request) {
-        try {
-            return ResponseEntity.ok(userService.login(login_Request));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body("Registration failed: " + e.getMessage());
         } catch (Exception e) {

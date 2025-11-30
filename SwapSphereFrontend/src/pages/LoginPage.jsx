@@ -1,5 +1,7 @@
+// src/pages/LoginPage.jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../api/axios"; // your axios instance
 import "../styles/LoginPage.css";
 import { useAuth } from "../context/AuthContext";
 
@@ -28,25 +30,31 @@ export default function LoginPage() {
 
   // LOCATION
   const [locationAllowed, setLocationAllowed] = useState(null);
+  const [lat, setLat] = useState(0);
+  const [long, setLong] = useState(0);
 
   const navigate = useNavigate();
   const { login } = useAuth();
 
+  // --- GET GEOLOCATION ---
   useEffect(() => {
     if (!navigator.geolocation) {
-      // Initialize location permission state
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLocationAllowed(false);
       return;
     }
 
     navigator.geolocation.getCurrentPosition(
-      () => setLocationAllowed(true),
+      (position) => {
+        setLocationAllowed(true);
+        setLat(position.coords.latitude);
+        setLong(position.coords.longitude);
+      },
       () => setLocationAllowed(false),
       { enableHighAccuracy: true, timeout: 10000 }
     );
   }, []);
 
+  // --- RESET FIELDS ---
   const resetAllFields = () => {
     setLogUser("");
     setLogPass("");
@@ -55,6 +63,8 @@ export default function LoginPage() {
     setEmail("");
     setCountry("");
     setCity("");
+    setFullName("");
+    setContact("");
   };
 
   const switchTo = (target) => {
@@ -70,7 +80,8 @@ export default function LoginPage() {
     }, 250);
   };
 
-  const handleLogin = (e) => {
+  // --- LOGIN HANDLER ---
+  const handleLogin = async (e) => {
     e.preventDefault();
     setErrorMessage("");
 
@@ -79,12 +90,36 @@ export default function LoginPage() {
       return;
     }
 
-    // perform very simple mock login
-    login({ username: logUser, email: `${logUser}@example.com` },);
-    navigate("/dashboard");
+    try {
+      const roleValue = role === "admin" ? "ADMIN" : "USER";
+
+      const response = await api.post("/auth/login", {
+        username: logUser,
+        password: logPass,
+        role: roleValue, // send role explicitly
+      });
+
+      login({ username: logUser, role: response.data.role });
+      navigate("/dashboard");
+
+    } catch (err) {
+      console.error(err);
+      if (err.response && err.response.data) {
+        if (typeof err.response.data === "string") {
+          setErrorMessage(err.response.data);
+        } else if (err.response.data.message) {
+          setErrorMessage(err.response.data.message);
+        } else {
+          setErrorMessage("Login failed. Please try again.");
+        }
+      } else {
+        setErrorMessage("Login failed. Please try again.");
+      }
+    }
   };
 
-  const handleRegister = (e) => {
+  // --- REGISTER HANDLER ---
+  const handleRegister = async (e) => {
     e.preventDefault();
     setErrorMessage("");
     setSuccessMessage("");
@@ -99,23 +134,40 @@ export default function LoginPage() {
       return;
     }
 
-    setSuccessMessage("Registration successful! Please log in.");
+    try {
+      await api.post("/users/register", {
+        username: regUser,
+        password: regPass,
+        fullName,
+        email,
+        contact,
+        country,
+        city,
+        role: "USER",
+        locLat: lat,
+        locLong: long,
+      });
 
-    setTransitioning(true);
-    setTimeout(() => {
-      setMode("login");
-      setTransitioning(false);
       setSuccessMessage("Registration successful! Please log in.");
-      setRegUser("");
-      setRegPass("");
-      setContact("");
-      setFullName("");
-      setEmail("");
-      setCountry("");
-      setCity("");
-    }, 300);
+      switchTo("login");
+
+    } catch (err) {
+      console.error(err);
+      if (err.response && err.response.data) {
+        if (typeof err.response.data === "string") {
+          setErrorMessage(err.response.data);
+        } else if (err.response.data.message) {
+          setErrorMessage(err.response.data.message);
+        } else {
+          setErrorMessage("Registration failed. Please try again.");
+        }
+      } else {
+        setErrorMessage("Registration failed. Please try again.");
+      }
+    }
   };
 
+  // --- ROLE TOGGLE ---
   const changeRole = (selected) => {
     setRole(selected);
     resetAllFields();

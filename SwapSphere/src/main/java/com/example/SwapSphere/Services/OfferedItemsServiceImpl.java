@@ -56,13 +56,12 @@ public class OfferedItemsServiceImpl implements OfferedItemsService {
     @Override
     public List<OfferedItemWithImages> getAllItemsByUser(String username) {
         String sql = """
-            SELECT o.*, i.img_url AS first_img
+            SELECT o.*, MIN(i.img_url) AS first_img
             FROM offered_items o
             LEFT JOIN images i ON o.offered_item_id = i.offered_item_id
-            AND i.img_url IS NOT NULL
             WHERE o.username = ?
             GROUP BY o.offered_item_id
-            ORDER BY o.created_at DESC
+            ORDER BY o.created_at DESC;
         """;
 
         return template.query(sql, (rs, rowNum) -> {

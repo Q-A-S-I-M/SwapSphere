@@ -43,12 +43,12 @@ public class RefreshTokenService {
     }
 
     public void deleteByUserIdAndUserAgentAndIp(String username, String userAgent, String ipAddress) {
-        template.update("DELETE FROM refresh_tokens WHERE user_id = ? AND user_agent = ? AND ip_address = ?", username, userAgent, ipAddress);
+        template.update("DELETE FROM refresh_tokens WHERE username = ? AND user_agent = ? AND ip_address = ?", username, userAgent, ipAddress);
     }
 
     public RefreshToken save(RefreshToken token) {
         template.update(
-            "INSERT INTO refresh_tokens (token, expiry_date, user_id, user_agent, ip_address) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO refresh_tokens (token, expiry_date, username, user_agent, ip_address) VALUES (?, ?, ?, ?, ?)",
             token.getToken(),
             token.getExpiryDate(),
             token.getUser().getUsername(),
@@ -114,7 +114,7 @@ public class RefreshTokenService {
     }
 
     public int deleteByUserId(Long userId) {
-        String sql = "DELETE FROM refresh_tokens WHERE user_id = ?";
+        String sql = "DELETE FROM refresh_tokens WHERE username = ?";
         return template.update(sql, userId);
     }
 }

@@ -36,6 +36,8 @@ public class User {
     private Double locLat;
     @Column(name = "longitude", nullable = false)
     private Double locLong;
+    private String country;
+    private String city;
     @Column(name = "profile_pic_url", nullable = true)
     private String profilePicUrl;
 }

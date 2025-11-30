@@ -1,224 +1,343 @@
-import React, { useMemo, useState } from "react";
+import React, { useState, useEffect } from "react";
 import "../styles/ProfilePage.css";
 import ItemTabs from "../components/ItemTabs";
 import OfferedItemCard from "../components/OfferedItemCard";
 import WantedItemCard from "../components/WantedItemCard";
 import RatingCard from "../components/RatingCard";
-import RequestCard from "../components/RequestCard";
+import Modal from "../components/Modal"; // simple reusable Modal
+import axios from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 
-/**
- * Profile page — Inline edit, Request modal, tabs, etc.
- *
- * Assumptions:
- * - isOwnProfile controls which actions show.
- * - For demo, isOwnProfile true = your profile, false = another user.
- */
 export default function ProfilePage() {
-  const { user, updateUser } = useAuth();
-  // Toggle this to false to test visiting someone else's profile
-  const [isOwnProfile, setIsOwnProfile] = useState(true);
+  const { user: authUser, updateUser } = useAuth();
+  const [user, setUser] = useState(null);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
 
-  // sample data for offered/wanted/ratings (kept simple)
-  const initialOffered = useMemo(
-    () => [
-      {
-        id: "o1",
-        name: "Vintage Coin Set",
-        image: "/assets/coin-main.jpg",
-        images: [
-          "/assets/coin-1.jpg",
-          "/assets/coin-2.jpg",
-          "/assets/coin-3.jpg",
-          "/assets/coin-4.jpg",
-          "/assets/coin-5.jpg",
-          "/assets/coin-6.jpg",
-          "/assets/coin-7.jpg",
-          "/assets/coin-8.jpg",
-          "/assets/coin-9.jpg",
-          "/assets/coin-10.jpg"
-        ],
-        description: "A neat set of vintage coins from 1900s. Good condition.",
-        category: "Collectibles",
-        condition: "Good",
-        priority: 23,
-        status: "Available",
-        createdAt: "2025-11-01T10:15:00Z"
+  const [offeredItems, setOfferedItems] = useState([]);
+  const [wantedItems, setWantedItems] = useState([]);
+  const [ratings, setRatings] = useState([]);
+
+  // Modals for adding items
+  const [addOfferedModal, setAddOfferedModal] = useState(false);
+  const [addWantedModal, setAddWantedModal] = useState(false);
+
+  // Profile form
+  const [profileForm, setProfileForm] = useState({
+    fullName: "",
+    email: "",
+    contact: "",
+    country: "",
+    city: "",
+    profilePicFile: null,
+    locLat: null,
+    locLong: null,
+  });
+  const [profilePicPreview, setProfilePicPreview] = useState(null);
+
+  // Offered item form
+  const [offeredForm, setOfferedForm] = useState({
+    title: "",
+    description: "",
+    category: "",
+    condition: "",
+    priority: 0,
+    status: "Available",
+    images: [],
+    imagePreviews: [],
+  });
+
+  // Wanted item form
+  const [wantedForm, setWantedForm] = useState({
+    title: "",
+    description: "",
+    category: "",
+    priority: 0,
+    status: "Available",
+  });
+
+  // Fetch user data + items + ratings
+  useEffect(() => {
+    if (!authUser?.username) return;
+
+    let isMounted = true;
+
+    const fetchUserData = async () => {
+      try {
+        const res = await axios.get(`/users/${authUser.username}`);
+        if (!isMounted) return;
+
+        setUser(res.data);
+        setProfileForm({
+          fullName: res.data.fullName || "",
+          email: res.data.email || "",
+          contact: res.data.contact || "",
+          country: res.data.country || "",
+          city: res.data.city || "",
+          profilePicFile: res.data.profilePicUrl || null,
+          locLat: res.data.locLat || null,
+          locLong: res.data.locLong || null,
+        });
+        setProfilePicPreview(res.data.profilePicUrl || null);
+        console.log(res.data.profilePicUrl);
+
+        const [offeredRes, wantedRes, ratingsRes] = await Promise.all([
+          axios.get(`/offer-items/user-item/${authUser.username}`),
+          axios.get(`/wanted-items/user-item/${authUser.username}`),
+          axios.get(`/ratings/user/${authUser.username}`),
+        ]);
+        if (!isMounted) return;
+
+        setOfferedItems(offeredRes.data);
+        setWantedItems(wantedRes.data);
+        setRatings(ratingsRes.data);
+      } catch (err) {
+        console.error("Error fetching profile data", err);
+        alert("Failed to load profile data");
       }
-    ],
-    []
-  );
+    };
 
-  const initialWanted = useMemo(
-    () => [
-      {
-        id: "w1",
-        name: "Rare Board Game",
-        description: "Looking for the limited edition version.",
-        category: "Games",
-        condition: "Any",
+    fetchUserData();
+
+    return () => { isMounted = false; };
+  }, [authUser]);
+
+  // Handlers for profile form
+  const handleProfileChange = (e) => {
+    const { name, value } = e.target;
+    setProfileForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleProfilePicChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setProfileForm(prev => ({ ...prev, profilePicFile: file }));
+    setProfilePicPreview(URL.createObjectURL(file));
+  };
+
+  // Save profile with automatic location
+  const handleSaveProfile = async () => {
+    try {
+      if (!user?.username) return;
+
+      let profilePicURL = user.profilePic;
+
+      // Upload profile picture if selected
+      if (profileForm.profilePicFile) {
+        const formData = new FormData();
+        formData.append("file", profileForm.profilePicFile);
+        formData.append("username", user.username);
+        const res = await axios.put("/api/images/upload-profile-pic", formData);
+        profilePicURL = res.data;
+        user.profilePic = profilePicURL;
+      }
+
+      // Get current location automatically
+      let locLat = profileForm.locLat;
+      let locLong = profileForm.locLong;
+      if (navigator.geolocation) {
+        const pos = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject);
+        });
+        locLat = pos.coords.latitude;
+        locLong = pos.coords.longitude;
+      }
+
+      const updatedUser = {
+        ...user,
+        fullName: profileForm.fullName,
+        email: profileForm.email,
+        contact: profileForm.contact,
+        country: profileForm.country,
+        city: profileForm.city,
+        profilePic: profilePicURL,
+        locLat,
+        locLong,
+      };
+
+      const res = await axios.put(`/users/${user.username}`, updatedUser);
+
+      setUser(updatedUser);
+      updateUser(updatedUser);
+      setProfileModalOpen(false);
+    } catch (err) {
+      console.error(err);
+      alert("Error updating profile");
+    }
+  };
+
+  // Add Offered Item
+  const handleOfferedImageChange = (e) => {
+    const files = Array.from(e.target.files).slice(0, 10);
+    setOfferedForm(prev => ({
+      ...prev,
+      images: files,
+      imagePreviews: files.map(f => URL.createObjectURL(f))
+    }));
+  };
+
+  const handleAddOfferedItem = async () => {
+    try {
+      const itemPayload = {
+        username: user.username,
+        title: offeredForm.title,
+        description: offeredForm.description,
+        category: offeredForm.category,
+        condition: offeredForm.condition,
+        priority: offeredForm.priority,
+        status: offeredForm.status
+      };
+      const res = await axios.post("/offer-items", itemPayload);
+      const newItem = res.data;
+
+      for (let img of offeredForm.images) {
+        const formData = new FormData();
+        formData.append("file", img);
+        formData.append("id", newItem.offeredItemId);
+        await axios.post("/api/images/upload", formData);
+      }
+
+      setOfferedItems(prev => [...prev, newItem]);
+      setAddOfferedModal(false);
+      setOfferedForm({
+        title: "",
+        description: "",
+        category: "",
+        condition: "",
         priority: 0,
         status: "Available",
-        createdAt: "2025-10-05T08:30:00Z"
-      }
-    ],
-    []
-  );
-
-  const initialRatings = useMemo(
-    () => [
-      {
-        id: "r1",
-        rater: "alice",
-        raterPic: "/assets/user1.jpg",
-        score: 5,
-        review: "Smooth trade, fast shipping!",
-        createdAt: "2025-11-01T12:00:00Z"
-      },
-      {
-        id: "r2",
-        rater: "bob",
-        raterPic: "/assets/user2.jpg",
-        score: 4,
-        review: "Item as described — would trade again.",
-        createdAt: "2025-10-30T09:20:00Z"
-      }
-    ],
-    []
-  );
-
-  const [offered] = useState(initialOffered);
-  const [wanted, setWanted] = useState(initialWanted);
-  const [ratings] = useState(initialRatings);
-
-  // Profile inline edit state (name/email)
-  const [editing, setEditing] = useState(false);
-  const [nameValue, setNameValue] = useState(user?.name || "");
-  const [emailValue, setEmailValue] = useState(user?.email || "");
-
-  // Request modal state
-  const [requestOpenFor, setRequestOpenFor] = useState(null); // item object when open
-  const { user: authUser } = useAuth();
-
-  // handlers
-  const handleSaveProfile = () => {
-    updateUser({ name: nameValue, email: emailValue });
-    setEditing(false);
+        images: [],
+        imagePreviews: [],
+      });
+    } catch (err) {
+      console.error(err);
+      alert("Error adding offered item");
+    }
   };
 
-  const handleDeleteWanted = (id) => setWanted((p) => p.filter((x) => x.id !== id));
-
-  const openRequest = (item) => {
-    // open request modal for item (when viewing other's profile)
-    setRequestOpenFor(item);
+  // Add Wanted Item
+  const handleAddWantedItem = async () => {
+    try {
+      const payload = { ...wantedForm, username: user.username };
+      const res = await axios.post("/wanted-items", payload);
+      setWantedItems(prev => [...prev, res.data]);
+      setAddWantedModal(false);
+      setWantedForm({ title: "", description: "", category: "", priority: 0, status: "Available" });
+    } catch (err) {
+      console.error(err);
+      alert("Error adding wanted item");
+    }
   };
-  const closeRequest = () => setRequestOpenFor(null);
+
+  // Delete handlers
+  const deleteOffered = async (id) => {
+    if (!window.confirm("Delete this offered item?")) return;
+    await axios.delete(`/offer-items/${id}`);
+    setOfferedItems(prev => prev.filter(it => it.offeredItemId !== id));
+  };
+  const deleteWanted = async (id) => {
+    if (!window.confirm("Delete this wanted item?")) return;
+    await axios.delete(`/wanted-items/${id}`);
+    setWantedItems(prev => prev.filter(it => it.wantedItemId !== id));
+  };
 
   return (
     <div className="profile-page-root">
-      {/* small dev toggle to preview other's profile quickly */}
-      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-        <label style={{ fontSize: 13, color: "#666" }}>
-          <input type="checkbox" checked={!isOwnProfile} onChange={(e) => setIsOwnProfile(!e.target.checked)} />
-          &nbsp;Viewing other user's profile
-        </label>
-      </div>
-
+      {/* Header */}
       <div className="profile-header-panel">
         <div className="profile-header-left">
           <div className="avatar-large">
-            {user?.profilePic ? <img src={user.profilePic} alt="avatar" /> : <div className="avatar-fallback">{(user?.name || "U").charAt(0).toUpperCase()}</div>}
+            {user?.profilePic ? (
+              <img src={user.profilePic} alt="avatar" />
+            ) : (
+              <div className="avatar-fallback">{user?.username?.charAt(0).toUpperCase() || "U"}</div>
+            )}
           </div>
         </div>
 
         <div className="profile-header-right">
-          <div className="profile-top-row">
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <div className={editing ? "profile-name-editing" : "profile-name"}>{editing ? (
-                <input className="profile-input-edit" value={nameValue} onChange={(e) => setNameValue(e.target.value)} />
-              ) : (
-                <span className="profile-name-text">{user?.name}</span>
-              )}</div>
-
-              <div className="profile-meta-vertical">
-                <div><strong>Email:</strong>&nbsp;{editing ? <input className="profile-input-edit small" value={emailValue} onChange={(e) => setEmailValue(e.target.value)} /> : <span className="muted">{user?.email}</span>}</div>
-                <div><strong>Location:</strong>&nbsp;<span className="muted">{user?.location}</span></div>
-                <div><strong>Rating:</strong>&nbsp;<span className="muted">{user?.rating}</span></div>
-              </div>
-            </div>
-
-            <div className="profile-action-col">
-              {!editing ? (
-                <button className="btn-edit-profile" onClick={() => setEditing(true)}>Edit</button>
-              ) : (
-                <button className="btn-confirm-profile" onClick={handleSaveProfile}>Confirm</button>
-              )}
-            </div>
-          </div>
+          <div><strong>Username:</strong> {user?.username || "..."}</div>
+          <div><strong>Full Name:</strong> {user?.fullName || "..."}</div>
+          <div><strong>Contact:</strong> {user?.contact || "..."}</div>
+          <div><strong>Email:</strong> {user?.email || "..."}</div>
+          <div><strong>Country:</strong> {user?.country || "..."}</div>
+          <div><strong>City:</strong> {user?.city || "..."}</div>
+          <div><strong>Rating:</strong> {user?.rating || 0}</div>
+          <button onClick={() => setProfileModalOpen(true)}>Edit Profile</button>
         </div>
       </div>
 
-      <div className="profile-tabs-area">
-        <ItemTabs
-          offeredCount={offered.length}
-          wantedCount={wanted.length}
-          ratingsCount={ratings.length}
-          renderAddButton={(activeTab) => {
-            if (activeTab === "ratings") return null;
-            return (
-              <div className="add-item-wrap">
-                <button className="btn-add-item" onClick={() => alert("Add Item (placeholder)")}>+ Add Item</button>
-              </div>
-            );
-          }}
-          renderContent={(activeTab) => {
-            if (activeTab === "offered") {
-              return (
-                <div className="items-list">
-                  {offered.map((it) => (
-                    <OfferedItemCard
-                      key={it.id}
-                      item={it}
-                      isOwnProfile={isOwnProfile}
-                      source="profile"
-                      onRequest={openRequest}
-                    />
-                  ))}
-                </div>
-              );
-            }
-            if (activeTab === "wanted") {
-              return (
-                <div className="items-list">
-                  {wanted.map((it) => (
-                    <WantedItemCard key={it.id} item={it} isOwn={isOwnProfile} onDelete={() => handleDeleteWanted(it.id)} />
-                  ))}
-                </div>
-              );
-            }
-            return (
-              <div className="items-list">
-                {ratings.map((r) => <RatingCard key={r.id} rating={r} />)}
-              </div>
-            );
-          }}
-        />
-      </div>
+      {/* Tabs */}
+      <ItemTabs
+        offeredCount={offeredItems.length}
+        wantedCount={wantedItems.length}
+        ratingsCount={ratings.length}
+        renderAddButton={(activeTab) => {
+          if (activeTab === "offered") return <button onClick={() => setAddOfferedModal(true)}>+ Add Offered Item</button>;
+          if (activeTab === "wanted") return <button onClick={() => setAddWantedModal(true)}>+ Add Wanted Item</button>;
+          return null;
+        }}
+        renderContent={(activeTab) => {
+          if (activeTab === "offered") return (
+            <div className="items-list">
+              {offeredItems.map(it => (
+                <OfferedItemCard key={it.offeredItemId} item={it} isOwnProfile={true} onDelete={() => deleteOffered(it.offeredItemId)} />
+              ))}
+            </div>
+          );
+          if (activeTab === "wanted") return (
+            <div className="items-list">
+              {wantedItems.map(it => (
+                <WantedItemCard key={it.wantedItemId} item={it} isOwn={true} onDelete={() => deleteWanted(it.wantedItemId)} />
+              ))}
+            </div>
+          );
+          if (activeTab === "ratings") return (
+            <div className="items-list">
+              {ratings.map(r => <RatingCard key={r.ratingId} rating={r} />)}
+            </div>
+          );
+        }}
+      />
 
-      {requestOpenFor && (
-        <RequestCard
-          open={Boolean(requestOpenFor)}
-          onClose={closeRequest}
-          targetItem={requestOpenFor}
-          myItems={authUser?.myItems || []}
-          myTokens={authUser?.tokens || 0}
-          onConfirm={(payload) => {
-            // placeholder behavior on confirm: simply close and show alert
-            console.log("Request payload:", payload);
-            alert("Request sent (placeholder). See console for payload.");
-            closeRequest();
-          }}
-        />
+      {/* Profile Modal */}
+      {profileModalOpen && (
+        <Modal onClose={() => setProfileModalOpen(false)} title="Edit Profile">
+          <input type="text" name="fullName" placeholder="Full name" value={profileForm.fullName} onChange={handleProfileChange} />
+          <input type="email" name="email" placeholder="Email" value={profileForm.email} onChange={handleProfileChange} />
+          <input type="text" name="contact" placeholder="Contact" value={profileForm.contact} onChange={handleProfileChange} />
+          <input type="text" name="country" placeholder="Country" value={profileForm.country} onChange={handleProfileChange} />
+          <input type="text" name="city" placeholder="City" value={profileForm.city} onChange={handleProfileChange} />
+          <input type="file" accept="image/*" onChange={handleProfilePicChange} />
+          {profilePicPreview && <img src={profilePicPreview} alt="Preview" className="profile-pic-preview" />}
+          <button onClick={handleSaveProfile}>Save Profile</button>
+        </Modal>
+      )}
+
+      {/* Add Offered Item Modal */}
+      {addOfferedModal && (
+        <Modal onClose={() => setAddOfferedModal(false)} title="Add Offered Item">
+          <input placeholder="Title" value={offeredForm.title} onChange={(e) => setOfferedForm({...offeredForm, title: e.target.value})} />
+          <input placeholder="Description" value={offeredForm.description} onChange={(e) => setOfferedForm({...offeredForm, description: e.target.value})} />
+          <input placeholder="Category" value={offeredForm.category} onChange={(e) => setOfferedForm({...offeredForm, category: e.target.value})} />
+          <input placeholder="Condition" value={offeredForm.condition} onChange={(e) => setOfferedForm({...offeredForm, condition: e.target.value})} />
+          <input type="number" placeholder="Priority" value={offeredForm.priority} onChange={(e) => setOfferedForm({...offeredForm, priority: Number(e.target.value)})} />
+          <input type="file" multiple accept="image/*" onChange={handleOfferedImageChange} />
+          <div className="offered-previews">
+            {offeredForm.imagePreviews.map((src, idx) => <img key={idx} src={src} alt="preview" className="preview-thumb" />)}
+          </div>
+          <button onClick={handleAddOfferedItem}>Add Offered Item</button>
+        </Modal>
+      )}
+
+      {/* Add Wanted Item Modal */}
+      {addWantedModal && (
+        <Modal onClose={() => setAddWantedModal(false)} title="Add Wanted Item">
+          <input placeholder="Title" value={wantedForm.title} onChange={(e) => setWantedForm({...wantedForm, title: e.target.value})} />
+          <input placeholder="Description" value={wantedForm.description} onChange={(e) => setWantedForm({...wantedForm, description: e.target.value})} />
+          <input placeholder="Category" value={wantedForm.category} onChange={(e) => setWantedForm({...wantedForm, category: e.target.value})} />
+          <input type="number" placeholder="Priority" value={wantedForm.priority} onChange={(e) => setWantedForm({...wantedForm, priority: Number(e.target.value)})} />
+          <button onClick={handleAddWantedItem}>Add Wanted Item</button>
+        </Modal>
       )}
     </div>
   );

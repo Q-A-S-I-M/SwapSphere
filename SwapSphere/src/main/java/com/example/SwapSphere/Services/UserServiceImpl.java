@@ -25,10 +25,10 @@ public class UserServiceImpl implements UserService{
         String query = "SELECT COUNT(*) FROM Users WHERE username = ?";
         int count = template.queryForObject(query, Integer.class, user.getUsername());
         if(count ==0 ){
-            query = "INSERT INTO Users (username, full_name, email, password, contact, role, rating, created_at, longitude, latitude, profile_pic_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            query = "INSERT INTO Users (username, full_name, email, password, contact, role, rating, created_at, longitude, latitude, profile_pic_url, country, city) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             user.setRating(0);
             user.setCreatedAt(new Timestamp(System.currentTimeMillis()));
-            template.update(query, user.getUsername(), user.getFullName(), user.getEmail(), hashPassword, user.getContact(), user.getRole(), user.getRating(), user.getCreatedAt(), user.getLocLong(), user.getLocLat(), user.getProfilePicUrl());
+            template.update(query, user.getUsername(), user.getFullName(), user.getEmail(), hashPassword, user.getContact(), user.getRole(), user.getRating(), user.getCreatedAt(), user.getLocLong(), user.getLocLat(), user.getProfilePicUrl(), user.getCountry(), user.getCity());
         }else{
             throw new RuntimeException("Username already exists!");
         }
@@ -53,11 +53,10 @@ public class UserServiceImpl implements UserService{
                 full_name = ?, 
                 email = ?, 
                 contact = ?, 
-                role = ?,
-                rating = ?, 
                 longitude = ?, 
                 latitude = ?,
-                profile_pic_url = ?
+                country = ?,
+                city = ?
             WHERE username = ?
         """;
 
@@ -65,14 +64,12 @@ public class UserServiceImpl implements UserService{
                 user.getFullName(),
                 user.getEmail(),
                 user.getContact(),
-                user.getRole(),
-                user.getRating(),
                 user.getLocLong(),
                 user.getLocLat(),
-                user.getProfilePicUrl(),
+                user.getCountry(),
+                user.getCity(),
                 username
         );
-
         return getUserById(username);
     }
 

@@ -109,10 +109,4 @@ public class UserWalletServiceImpl implements UserWalletService {
         notificationService.tokensBought(userService.getUserById(username), tokens);
         return getWalletByUserId(username);
     }
-
-    
-
-    
-
-
 }
