@@ -6,29 +6,28 @@ import logo from '../assets/logo.jpg';
 export default function SideNav() {
   const items = [
     { label: "Dashboard", to: "/dashboard" },
-    { label: "Profile", to: "/profile" },
     { label: "Search", to: "/search" },
     { label: "Requests", to: "/requests" },
-    { label: "Wallet", to: "/wallet" },
     { label: "Chat", to: "/chat" },
     { label: "Notifications", to: "/notifications" },
+    { label: "Wallet", to: "/wallet" },
+    { label: "Profile", to: "/profile" },
   ];
 
   return (
     <aside className="sidenav">
       <div className="sidenav-top">
-        <img src={logo} alt="SwapSphere" className="sidenav-logo" />
+        <img src={logo} alt="SwapSphere Logo" className="sidenav-logo" />
       </div>
 
       <nav className="sidenav-nav">
-        {items.map((it) => (
+        {items.map((item) => (
           <NavLink
-            key={it.to}
-            to={it.to}
+            key={item.to}
+            to={item.to}
             className={({ isActive }) => `sidenav-item ${isActive ? "active" : ""}`}
-            end
           >
-            {it.label}
+            {item.label}
           </NavLink>
         ))}
       </nav>

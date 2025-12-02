@@ -26,9 +26,9 @@ public class TokenSwapUsageController {
         return ResponseEntity.ok(tokenSwapUsageService.addUsage(usage));
     }
 
-    @GetMapping("/swapUsage/{swapId}")
-    public ResponseEntity<List<TokenSwapUsage>> getBySwap(@PathVariable Long swapId) {
-        return ResponseEntity.ok(tokenSwapUsageService.getBySwapUsage(swapId));
+    @GetMapping("/{username}")
+    public ResponseEntity<List<TokenSwapUsage>> getByUser(@PathVariable String username) {
+        return ResponseEntity.ok(tokenSwapUsageService.getByUser(username));
     }
 }
 

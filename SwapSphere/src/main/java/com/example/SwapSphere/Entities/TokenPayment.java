@@ -29,16 +29,10 @@ public class TokenPayment {
     @ManyToOne
     @JoinColumn(name = "username", nullable = false, referencedColumnName = "username")
     private User user;
-    @Column(name = "transaction_id", nullable = false)
-    private String transactionId;
     @Column(name = "amount_paid", nullable = false)
     private double amountPaid;
     @Column(name = "token_purchased", nullable = false)
     private int tokensPurchased;
-    @Column(name = "payment_method", nullable = false)
-    private String paymentMethod;
-    @Column(name = "payment_status", nullable = false)
-    private String paymentStatus;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

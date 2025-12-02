@@ -9,7 +9,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.SwapSphere.DTOs.TokensTransfer;
 import com.example.SwapSphere.Entities.UserWallet;
+import com.example.SwapSphere.Entities.TokenPayment;
 import com.example.SwapSphere.Services.UserWalletService;
 
 @RestController
@@ -19,30 +21,33 @@ public class UserWalletController {
     @Autowired
     private UserWalletService walletService;
 
-    @GetMapping("/{userId}")
+    @GetMapping("/{username}")
     public ResponseEntity<UserWallet> getWallet(@PathVariable String username) {
         return ResponseEntity.ok(walletService.getWalletByUserId(username));
     }
 
-    @PutMapping("/lock/{userId}")
+    @PutMapping("/lock/{username}")
     public ResponseEntity<UserWallet> lockTokens(@PathVariable String username,@RequestBody int tokens) {
         return ResponseEntity.ok(walletService.lockTokens(username, tokens));
     }
 
-    @PutMapping("/buy/{userId}")
-    public ResponseEntity<UserWallet> buyTokens(@PathVariable String username,@RequestBody int tokens) {
-        return ResponseEntity.ok(walletService.buyTokens(username, tokens));
+    @PutMapping("/buy")
+    public ResponseEntity<UserWallet> buyTokens(@RequestBody TokenPayment payment) {
+        return ResponseEntity.ok(walletService.buyTokens(payment));
     }
 
-    @PutMapping("/spend/{userId}")
+    @PutMapping("/spend/{username}")
     public ResponseEntity<UserWallet> spendTokens(@PathVariable String username,@RequestBody int tokens) {
         return ResponseEntity.ok(walletService.spendTokens(username, tokens));
     }
 
-    @PutMapping("/unlock/{userId}")
+    @PutMapping("/unlock/{username}")
     public ResponseEntity<UserWallet> tokensUnlock(@PathVariable String username,@RequestBody int tokens){
         return ResponseEntity.ok(walletService.tokensUnlock(username, tokens));
     }
-    
+    @PutMapping("/transfer/{username}")
+    public ResponseEntity<UserWallet> tokensTransfer(@PathVariable String username,@RequestBody TokensTransfer transfer){
+        return ResponseEntity.ok(walletService.transferTokens(username, transfer));
+    }
 }
 

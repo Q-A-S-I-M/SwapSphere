@@ -17,7 +17,6 @@ export default function ProfilePage() {
   const [wantedItems, setWantedItems] = useState([]);
   const [ratings, setRatings] = useState([]);
 
-  // Modals for adding items
   const [addOfferedModal, setAddOfferedModal] = useState(false);
   const [addWantedModal, setAddWantedModal] = useState(false);
 
@@ -34,7 +33,7 @@ export default function ProfilePage() {
   });
   const [profilePicPreview, setProfilePicPreview] = useState(null);
 
-  // Offered item form
+  // Offered Item form
   const [offeredForm, setOfferedForm] = useState({
     title: "",
     description: "",
@@ -46,7 +45,7 @@ export default function ProfilePage() {
     imagePreviews: [],
   });
 
-  // Wanted item form
+  // Wanted Item form
   const [wantedForm, setWantedForm] = useState({
     title: "",
     description: "",
@@ -55,7 +54,7 @@ export default function ProfilePage() {
     status: "Available",
   });
 
-  // Fetch user data + items + ratings
+  // Fetch user, items, ratings
   useEffect(() => {
     if (!authUser?.username) return;
 
@@ -66,19 +65,21 @@ export default function ProfilePage() {
         const res = await axios.get(`/users/${authUser.username}`);
         if (!isMounted) return;
 
-        setUser(res.data);
+        const userData = res.data;
+        userData.profilePic = userData.profilePic || userData.profilePicUrl || null;
+
+        setUser(userData);
         setProfileForm({
-          fullName: res.data.fullName || "",
-          email: res.data.email || "",
-          contact: res.data.contact || "",
-          country: res.data.country || "",
-          city: res.data.city || "",
-          profilePicFile: res.data.profilePicUrl || null,
-          locLat: res.data.locLat || null,
-          locLong: res.data.locLong || null,
+          fullName: userData.fullName || "",
+          email: userData.email || "",
+          contact: userData.contact || "",
+          country: userData.country || "",
+          city: userData.city || "",
+          profilePicFile: null,
+          locLat: userData.locLat || null,
+          locLong: userData.locLong || null,
         });
-        setProfilePicPreview(res.data.profilePicUrl || null);
-        console.log(res.data.profilePicUrl);
+        setProfilePicPreview(userData.profilePic);
 
         const [offeredRes, wantedRes, ratingsRes] = await Promise.all([
           axios.get(`/offer-items/user-item/${authUser.username}`),
@@ -101,7 +102,7 @@ export default function ProfilePage() {
     return () => { isMounted = false; };
   }, [authUser]);
 
-  // Handlers for profile form
+  // Profile handlers
   const handleProfileChange = (e) => {
     const { name, value } = e.target;
     setProfileForm(prev => ({ ...prev, [name]: value }));
@@ -114,24 +115,20 @@ export default function ProfilePage() {
     setProfilePicPreview(URL.createObjectURL(file));
   };
 
-  // Save profile with automatic location
   const handleSaveProfile = async () => {
     try {
       if (!user?.username) return;
 
       let profilePicURL = user.profilePic;
 
-      // Upload profile picture if selected
       if (profileForm.profilePicFile) {
         const formData = new FormData();
         formData.append("file", profileForm.profilePicFile);
         formData.append("username", user.username);
         const res = await axios.put("/api/images/upload-profile-pic", formData);
         profilePicURL = res.data;
-        user.profilePic = profilePicURL;
       }
 
-      // Get current location automatically
       let locLat = profileForm.locLat;
       let locLong = profileForm.locLong;
       if (navigator.geolocation) {
@@ -154,18 +151,18 @@ export default function ProfilePage() {
         locLong,
       };
 
-      const res = await axios.put(`/users/${user.username}`, updatedUser);
-
+      await axios.put(`/users/${user.username}`, updatedUser);
       setUser(updatedUser);
       updateUser(updatedUser);
       setProfileModalOpen(false);
+      setProfilePicPreview(profilePicURL);
     } catch (err) {
       console.error(err);
       alert("Error updating profile");
     }
   };
 
-  // Add Offered Item
+  // Offered item handlers
   const handleOfferedImageChange = (e) => {
     const files = Array.from(e.target.files).slice(0, 10);
     setOfferedForm(prev => ({
@@ -178,7 +175,9 @@ export default function ProfilePage() {
   const handleAddOfferedItem = async () => {
     try {
       const itemPayload = {
-        username: user.username,
+        user: {
+          username: user.username,
+        },
         title: offeredForm.title,
         description: offeredForm.description,
         category: offeredForm.category,
@@ -214,10 +213,10 @@ export default function ProfilePage() {
     }
   };
 
-  // Add Wanted Item
+  // Wanted item handlers
   const handleAddWantedItem = async () => {
     try {
-      const payload = { ...wantedForm, username: user.username };
+      const payload = { ...wantedForm, user:{username: user.username} };
       const res = await axios.post("/wanted-items", payload);
       setWantedItems(prev => [...prev, res.data]);
       setAddWantedModal(false);
@@ -228,12 +227,12 @@ export default function ProfilePage() {
     }
   };
 
-  // Delete handlers
   const deleteOffered = async (id) => {
     if (!window.confirm("Delete this offered item?")) return;
     await axios.delete(`/offer-items/${id}`);
     setOfferedItems(prev => prev.filter(it => it.offeredItemId !== id));
   };
+
   const deleteWanted = async (id) => {
     if (!window.confirm("Delete this wanted item?")) return;
     await axios.delete(`/wanted-items/${id}`);
@@ -253,17 +252,20 @@ export default function ProfilePage() {
             )}
           </div>
         </div>
-
         <div className="profile-header-right">
-          <div><strong>Username:</strong> {user?.username || "..."}</div>
-          <div><strong>Full Name:</strong> {user?.fullName || "..."}</div>
-          <div><strong>Contact:</strong> {user?.contact || "..."}</div>
-          <div><strong>Email:</strong> {user?.email || "..."}</div>
-          <div><strong>Country:</strong> {user?.country || "..."}</div>
-          <div><strong>City:</strong> {user?.city || "..."}</div>
-          <div><strong>Rating:</strong> {user?.rating || 0}</div>
-          <button onClick={() => setProfileModalOpen(true)}>Edit Profile</button>
+          <div className="profile-meta-vertical">
+            <div><strong>Username:</strong> {user?.username || "..."}</div>
+            <div><strong>Full Name:</strong> {user?.fullName || "..."}</div>
+            <div><strong>Contact:</strong> {user?.contact || "..."}</div>
+            <div><strong>Email:</strong> {user?.email || "..."}</div>
+            <div><strong>Country:</strong> {user?.country || "..."}</div>
+            <div><strong>City:</strong> {user?.city || "..."}</div>
+            <div><strong>Rating:</strong> {user?.rating || 0}</div>
+          </div>
         </div>
+        <div className="profile-action-col">
+            <button className="btn-edit-profile" onClick={() => setProfileModalOpen(true)}>Edit Profile</button>
+          </div>
       </div>
 
       {/* Tabs */}
@@ -272,8 +274,8 @@ export default function ProfilePage() {
         wantedCount={wantedItems.length}
         ratingsCount={ratings.length}
         renderAddButton={(activeTab) => {
-          if (activeTab === "offered") return <button onClick={() => setAddOfferedModal(true)}>+ Add Offered Item</button>;
-          if (activeTab === "wanted") return <button onClick={() => setAddWantedModal(true)}>+ Add Wanted Item</button>;
+          if (activeTab === "offered") return <button className="btn-add-item" onClick={() => setAddOfferedModal(true)}>+ Add Offered Item</button>;
+          if (activeTab === "wanted") return <button className="btn-add-item" onClick={() => setAddWantedModal(true)}>+ Add Wanted Item</button>;
           return null;
         }}
         renderContent={(activeTab) => {
@@ -302,41 +304,41 @@ export default function ProfilePage() {
       {/* Profile Modal */}
       {profileModalOpen && (
         <Modal onClose={() => setProfileModalOpen(false)} title="Edit Profile">
-          <input type="text" name="fullName" placeholder="Full name" value={profileForm.fullName} onChange={handleProfileChange} />
-          <input type="email" name="email" placeholder="Email" value={profileForm.email} onChange={handleProfileChange} />
-          <input type="text" name="contact" placeholder="Contact" value={profileForm.contact} onChange={handleProfileChange} />
-          <input type="text" name="country" placeholder="Country" value={profileForm.country} onChange={handleProfileChange} />
-          <input type="text" name="city" placeholder="City" value={profileForm.city} onChange={handleProfileChange} />
-          <input type="file" accept="image/*" onChange={handleProfilePicChange} />
+          <input className="profile-input-edit" type="text" name="fullName" placeholder="Full name" value={profileForm.fullName} onChange={handleProfileChange} />
+          <input className="profile-input-edit" type="email" name="email" placeholder="Email" value={profileForm.email} onChange={handleProfileChange} />
+          <input className="profile-input-edit" type="text" name="contact" placeholder="Contact" value={profileForm.contact} onChange={handleProfileChange} />
+          <input className="profile-input-edit" type="text" name="country" placeholder="Country" value={profileForm.country} onChange={handleProfileChange} />
+          <input className="profile-input-edit" type="text" name="city" placeholder="City" value={profileForm.city} onChange={handleProfileChange} />
+          <input className="profile-input-edit" type="file" accept="image/*" onChange={handleProfilePicChange} />
           {profilePicPreview && <img src={profilePicPreview} alt="Preview" className="profile-pic-preview" />}
-          <button onClick={handleSaveProfile}>Save Profile</button>
+          <button className="btn-confirm-profile" onClick={handleSaveProfile}>Save Profile</button>
         </Modal>
       )}
 
       {/* Add Offered Item Modal */}
       {addOfferedModal && (
         <Modal onClose={() => setAddOfferedModal(false)} title="Add Offered Item">
-          <input placeholder="Title" value={offeredForm.title} onChange={(e) => setOfferedForm({...offeredForm, title: e.target.value})} />
-          <input placeholder="Description" value={offeredForm.description} onChange={(e) => setOfferedForm({...offeredForm, description: e.target.value})} />
-          <input placeholder="Category" value={offeredForm.category} onChange={(e) => setOfferedForm({...offeredForm, category: e.target.value})} />
-          <input placeholder="Condition" value={offeredForm.condition} onChange={(e) => setOfferedForm({...offeredForm, condition: e.target.value})} />
-          <input type="number" placeholder="Priority" value={offeredForm.priority} onChange={(e) => setOfferedForm({...offeredForm, priority: Number(e.target.value)})} />
-          <input type="file" multiple accept="image/*" onChange={handleOfferedImageChange} />
-          <div className="offered-previews">
-            {offeredForm.imagePreviews.map((src, idx) => <img key={idx} src={src} alt="preview" className="preview-thumb" />)}
+          <input className="profile-input-edit" placeholder="Title" value={offeredForm.title} onChange={(e) => setOfferedForm({...offeredForm, title: e.target.value})} />
+          <input className="profile-input-edit" placeholder="Description" value={offeredForm.description} onChange={(e) => setOfferedForm({...offeredForm, description: e.target.value})} />
+          <input className="profile-input-edit" placeholder="Category" value={offeredForm.category} onChange={(e) => setOfferedForm({...offeredForm, category: e.target.value})} />
+          <input className="profile-input-edit" placeholder="Condition" value={offeredForm.condition} onChange={(e) => setOfferedForm({...offeredForm, condition: e.target.value})} />
+          <input className="profile-input-edit" type="number" placeholder="Priority" value={offeredForm.priority} onChange={(e) => setOfferedForm({...offeredForm, priority: Number(e.target.value)})} />
+          <input className="profile-input-edit" type="file" multiple accept="image/*" onChange={handleOfferedImageChange} />
+          <div className="offered-images-thumbnails">
+            {offeredForm.imagePreviews.map((src, idx) => <img key={idx} src={src} alt="preview" />)}
           </div>
-          <button onClick={handleAddOfferedItem}>Add Offered Item</button>
+          <button className="btn-confirm-profile" onClick={handleAddOfferedItem}>Add Offered Item</button>
         </Modal>
       )}
 
       {/* Add Wanted Item Modal */}
       {addWantedModal && (
         <Modal onClose={() => setAddWantedModal(false)} title="Add Wanted Item">
-          <input placeholder="Title" value={wantedForm.title} onChange={(e) => setWantedForm({...wantedForm, title: e.target.value})} />
-          <input placeholder="Description" value={wantedForm.description} onChange={(e) => setWantedForm({...wantedForm, description: e.target.value})} />
-          <input placeholder="Category" value={wantedForm.category} onChange={(e) => setWantedForm({...wantedForm, category: e.target.value})} />
-          <input type="number" placeholder="Priority" value={wantedForm.priority} onChange={(e) => setWantedForm({...wantedForm, priority: Number(e.target.value)})} />
-          <button onClick={handleAddWantedItem}>Add Wanted Item</button>
+          <input className="profile-input-edit" placeholder="Title" value={wantedForm.title} onChange={(e) => setWantedForm({...wantedForm, title: e.target.value})} />
+          <input className="profile-input-edit" placeholder="Description" value={wantedForm.description} onChange={(e) => setWantedForm({...wantedForm, description: e.target.value})} />
+          <input className="profile-input-edit" placeholder="Category" value={wantedForm.category} onChange={(e) => setWantedForm({...wantedForm, category: e.target.value})} />
+          <input className="profile-input-edit" type="number" placeholder="Priority" value={wantedForm.priority} onChange={(e) => setWantedForm({...wantedForm, priority: Number(e.target.value)})} />
+          <button className="btn-confirm-profile" onClick={handleAddWantedItem}>Add Wanted Item</button>
         </Modal>
       )}
     </div>

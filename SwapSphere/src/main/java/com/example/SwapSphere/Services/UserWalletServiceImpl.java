@@ -7,6 +7,8 @@ import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import com.example.SwapSphere.DTOs.TokensTransfer;
+import com.example.SwapSphere.Entities.TokenPayment;
 import com.example.SwapSphere.Entities.TokenSwapUsage;
 import com.example.SwapSphere.Entities.UserWallet;
 
@@ -21,6 +23,8 @@ public class UserWalletServiceImpl implements UserWalletService {
     UserService userService;
     @Autowired
     NotificationService notificationService;
+    @Autowired
+    TokensPaymentService paymentService;
 
     @Override
     public UserWallet getWalletByUserId(String userId) {
@@ -29,9 +33,9 @@ public class UserWalletServiceImpl implements UserWalletService {
             if (rs.next()) {
                 return new BeanPropertyRowMapper<>(UserWallet.class).mapRow(rs, 1);
             } else {
-                String insertSql = "INSERT INTO user_wallet (username, tokens_available, tokens_spent, updated_at) VALUES (?, ?, ?, ?)";
+                String insertSql = "INSERT INTO user_wallet (username, tokens_available, tokens_spent, updated_at, tokens_locked) VALUES (?, ?, ?, ?, ?)";
                 Timestamp now = new Timestamp(System.currentTimeMillis());
-                template.update(insertSql, userId, 0, 0, now);
+                template.update(insertSql, userId, 0, 0, now, 0);
 
                 return new UserWallet();
             }
@@ -95,18 +99,24 @@ public class UserWalletServiceImpl implements UserWalletService {
     }
 
     @Override
-    public void transferTokens(String username1, String username2, int tokens) {
+    public UserWallet transferTokens(String username1, TokensTransfer transfer) {
+        int tokens = transfer.getTokens();
+        String user2 = transfer.getUsername();
         tokensUnlock(username1, tokens);
         spendTokens(username1, tokens);
-        addTokens(username2, tokens);
-        tokenSwapUsageService.addUsage(new TokenSwapUsage(null, userService.getUserById(username1), userService.getUserById(username2), tokens, null));
-        notificationService.tokenTransfer(username1, userService.getUserById(username2), tokens);
+        addTokens(user2, tokens);
+        tokenSwapUsageService.addUsage(new TokenSwapUsage(null, userService.getUserById(username1), userService.getUserById(user2), tokens, null));
+        notificationService.tokenTransfer(username1, userService.getUserById(user2), tokens);
+        return getWalletByUserId(username1);
     }
 
     @Override
-    public UserWallet buyTokens(String username, int tokens){
-        addTokens(username, tokens);
-        notificationService.tokensBought(userService.getUserById(username), tokens);
-        return getWalletByUserId(username);
+    public UserWallet buyTokens(TokenPayment payment){
+        String user = payment.getUser().getUsername();
+        int tokens = payment.getTokensPurchased();
+        addTokens(user, tokens);
+        notificationService.tokensBought(userService.getUserById(user), tokens);
+        paymentService.addPayment(payment);
+        return getWalletByUserId(user);
     }
 }

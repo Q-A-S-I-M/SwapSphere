@@ -9,6 +9,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import com.example.SwapSphere.Entities.TokenSwapUsage;
+import com.example.SwapSphere.RowMappers.TokenSwapUsageRowMapper;
 
 @Service
 public class TokenSwapUsageServiceImpl implements TokenSwapUsageService {
@@ -39,10 +40,10 @@ public class TokenSwapUsageServiceImpl implements TokenSwapUsageService {
     }
 
     @Override
-    public List<TokenSwapUsage> getBySwapUsage(Long swapId) {
+    public List<TokenSwapUsage> getByUser(String username) {
 
-        String sql = "SELECT * FROM token_swap_usage WHERE swap__usage_id = ? ORDER BY created_at ASC";
+        String sql = "SELECT * FROM token_swap_usage WHERE username = ? ORDER BY created_at ASC";
 
-        return template.query(sql, new BeanPropertyRowMapper<>(TokenSwapUsage.class), swapId);
+        return template.query(sql, new TokenSwapUsageRowMapper(), username);
     }
 }

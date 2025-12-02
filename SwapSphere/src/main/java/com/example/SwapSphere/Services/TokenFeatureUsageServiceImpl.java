@@ -1,6 +1,7 @@
 package com.example.SwapSphere.Services;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
@@ -8,6 +9,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import com.example.SwapSphere.Entities.TokenFeatureUsage;
+import com.example.SwapSphere.Entities.TokenSwapUsage;
+import com.example.SwapSphere.RowMappers.TokenFeatureUsageRowMapper;
 
 @Service
 public class TokenFeatureUsageServiceImpl implements TokenFeatureUsageService {
@@ -38,4 +41,13 @@ public class TokenFeatureUsageServiceImpl implements TokenFeatureUsageService {
 
         return template.queryForObject(lastSql, new BeanPropertyRowMapper<>(TokenFeatureUsage.class));
     }
+
+    @Override
+    public List<TokenFeatureUsage> getByUser(String username) {
+
+        String sql = "SELECT * FROM token_feature_usage WHERE username = ? ORDER BY created_at ASC";
+
+        return template.query(sql, new TokenFeatureUsageRowMapper(), username);
+    }
+    
 }

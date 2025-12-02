@@ -1,0 +1,56 @@
+.wallet-page-root {
+  padding: 24px;
+  background: #f5f5f5;
+  min-height: 100vh;
+}
+
+.wallet-overview {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.wallet-card {
+  background: #fff;
+  flex: 1;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+.wallet-value {
+  font-size: 24px;
+  font-weight: bold;
+  margin-top: 8px;
+  color: var(--gold);
+}
+
+.wallet-actions {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.wallet-actions button {
+  padding: 8px 16px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 6px;
+  border: none;
+  background: var(--gold);
+  color: #000;
+}
+
+.items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.usage-card {
+  background: #fff;
+  padding: 12px 16px;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}

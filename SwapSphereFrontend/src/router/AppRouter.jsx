@@ -4,11 +4,16 @@ import LoginPage from "../pages/LoginPage";
 import DashboardPage from "../pages/DashboardPage";
 import ProfilePage from "../pages/ProfilePage";
 import SearchPage from "../pages/SearchPage";
+import NotificationPage from "../pages/NotificationPage";
 import AppLayout from "../layout/AppLayout";
+import { useAuth } from "../context/AuthContext";
+import UserWalletPage from "../pages/UserWalletPage";
 
 export default function AppRouter() {
+  const { user } = useAuth();
+
   return (
-    <Router>
+    <BrowserRouter>
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<LoginPage />} />
@@ -41,15 +46,47 @@ export default function AppRouter() {
           }
         />
 
-        {/* simple placeholders so nav links don't 404 */}
-        <Route path="/requests" element={<AppLayout><div style={{padding:24, background:"#fff"}}>Requests (placeholder)</div></AppLayout>} />
-        <Route path="/wallet" element={<AppLayout><div style={{padding:24, background:"#fff"}}>Wallet (placeholder)</div></AppLayout>} />
-        <Route path="/chat" element={<AppLayout><div style={{padding:24, background:"#fff"}}>Chat (placeholder)</div></AppLayout>} />
-        <Route path="/notifications" element={<AppLayout><div style={{padding:24, background:"#fff"}}>Notifications (placeholder)</div></AppLayout>} />
+        {/* Requests / Wallet / Chat placeholders */}
+        <Route
+          path="/requests"
+          element={
+            <AppLayout>
+              <div style={{ padding: 24, background: "#fff" }}>Requests (placeholder)</div>
+            </AppLayout>
+          }
+        />
+
+        <Route
+          path="/wallet"
+          element={
+            <AppLayout>
+              <UserWalletPage username={user?.username} />
+            </AppLayout>
+          }
+        />
+
+        <Route
+          path="/chat"
+          element={
+            <AppLayout>
+              <div style={{ padding: 24, background: "#fff" }}>Chat (placeholder)</div>
+            </AppLayout>
+          }
+        />
+
+        {/* ✅ REAL Notifications Page (NOT placeholder) */}
+        <Route
+          path="/notifications"
+          element={
+            <AppLayout>
+              <NotificationPage username={user?.username} />
+            </AppLayout>
+          }
+        />
 
         {/* fallback */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
-    </Router>
+    </BrowserRouter>
   );
 }

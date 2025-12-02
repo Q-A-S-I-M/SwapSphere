@@ -21,18 +21,14 @@ public class TokensPaymentServiceImpl implements TokensPaymentService {
 
         String sql = """
             INSERT INTO tokens_payment
-            (username, transaction_id, amount_paid, tokens_purchased,
-             payment_method, payment_status, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            (username, amount_paid, tokens_purchased, created_at)
+            VALUES (?, ?, ?, ?)
         """;
 
         template.update(sql,
                 payment.getUser().getUsername(),
-                payment.getTransactionId(),
                 payment.getAmountPaid(),
                 payment.getTokensPurchased(),
-                payment.getPaymentMethod(),
-                payment.getPaymentStatus(),
                 LocalDateTime.now()
         );
 

@@ -28,7 +28,7 @@ public class ImageUploadServiceImpl implements ImageUploadService{
                 ObjectUtils.asMap("folder", "swapsphere")
             );
             String url = uploadResult.get("secure_url").toString();
-            String sql = "INSERT INTO images (image_url, offered_item_id) VALUES (?, ?)";
+            String sql = "INSERT INTO images (img_url, offered_item_id) VALUES (?, ?)";
             template.update(sql, url, id);
             return url;
         }catch(IOException e){

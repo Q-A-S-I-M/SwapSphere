@@ -21,12 +21,12 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public List<Notification> getByUser(String username) {
         String sql = "SELECT * FROM notifications WHERE username = ? ORDER BY created_at DESC";
-
-        return template.query(
-                sql,
-                new BeanPropertyRowMapper<>(Notification.class),
-                username
-        );
+        List<Notification> notifications = template.query(sql, new BeanPropertyRowMapper<>(Notification.class), username);
+        for (Notification notification : notifications) {
+            markAsRead(notification.getNotificationId());
+            notification.setRead(true);
+        }
+        return notifications;
     }
 
     @Override

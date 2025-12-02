@@ -1,21 +1,50 @@
-.wanted-card{
-  background:#fff;border-radius:10px;border:1px solid rgba(0,0,0,0.06);overflow:hidden;transition:box-shadow 0.18s ease;
+.wanted-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 12px 16px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
 }
-.wanted-card:hover{box-shadow:0 8px 20px rgba(10,10,10,0.04);}
 
-.wanted-top{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;}
-.wanted-left{display:flex;align-items:center;gap:12px;}
-.wanted-name{font-weight:800;color:#111;}
+.wanted-top {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
 
-.wanted-right .toggle-btn{background:#f2f2f2;border:none;padding:8px 10px;border-radius:8px;cursor:pointer;}
+.wanted-left .wanted-name {
+  font-weight: 600;
+  font-size: 16px;
+}
 
-.wanted-expanded{overflow:hidden;transition:max-height 0.33s ease;border-top:1px solid rgba(0,0,0,0.03);padding:12px 16px;}
-.wanted-meta{display:flex;flex-direction:column;gap:8px;}
-.meta-row{display:flex;gap:12px;align-items:flex-start;}
-.meta-val{color:#111;} /* changed to black for visibility */
+.wanted-right button {
+  margin-left: 8px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: background 0.2s;
+}
 
-.wanted-actions{display:flex;justify-content:flex-end;padding-top:8px;}
-.remove-btn{background:#ffebe9;border:1px solid #ff7a7a;color:#b30f0f;padding:8px 10px;border-radius:8px;cursor:pointer;}
-.confirm-split{display:flex;gap:8px;}
-.confirm-yes{background:#28a745;color:#fff;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;}
-.confirm-no{background:#ddd;border:none;padding:8px 12px;border-radius:6px;cursor:pointer;}
+.btn-view {
+  background: var(--gold);
+  color: #000;
+}
+
+.btn-view:hover {
+  background: var(--gold-dark);
+  color: #fff;
+}
+
+.btn-delete {
+  background: #dc3545;
+  color: #fff;
+}
+
+.btn-delete:hover {
+  background: #a71d2a;
+}

@@ -19,11 +19,8 @@ public class TokenPaymentRowMapper implements RowMapper<TokenPayment> {
 
         p.setPaymentId(rs.getLong("payment_id"));
         p.setUser(userService.getUserById(rs.getString("username")));
-        p.setTransactionId(rs.getString("transaction_id"));
         p.setAmountPaid(rs.getDouble("amount_paid"));
         p.setTokensPurchased(rs.getInt("token_purchased"));
-        p.setPaymentMethod(rs.getString("payment_method"));
-        p.setPaymentStatus(rs.getString("payment_status"));
         p.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
 
         return p;
