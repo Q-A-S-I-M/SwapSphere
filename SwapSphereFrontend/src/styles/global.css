@@ -14,6 +14,26 @@
 html,body,#root{height:100%;}
 body{background:var(--bg); color:var(--text);}
 
+/* Ensure all text elements inherit color properly */
+p, h1, h2, h3, h4, h5, h6, span, div, li, td, th, label, a {
+  color: inherit;
+}
+
+/* Ensure inputs have visible text on dark backgrounds */
+input, textarea, select {
+  color: var(--text);
+  background: var(--card);
+}
+
+/* White cards should have dark text */
+.white-card {
+  color: #111;
+}
+
+.white-card * {
+  color: #111;
+}
+
 /* basic reusable */
 .card{border-radius:10px;padding:18px;background:var(--card);box-shadow:0 6px 18px rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.02);}
 .white-card{background:#fff;color:#111;border:1px solid rgba(0,0,0,0.06);box-shadow:0 6px 18px rgba(11,11,11,0.04);}

@@ -5,10 +5,12 @@ import java.sql.SQLException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Component;
 
 import com.example.SwapSphere.Entities.TokenPayment;
 import com.example.SwapSphere.Services.UserService;
 
+@Component
 public class TokenPaymentRowMapper implements RowMapper<TokenPayment> {
     @Autowired
     private UserService userService;

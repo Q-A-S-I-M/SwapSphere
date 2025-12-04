@@ -10,4 +10,6 @@ public interface RatingsService {
 
     List<Rating> getRatingsByUserId(String username);
     
+    void deleteRating(Long ratingId, String username);
+    
 }

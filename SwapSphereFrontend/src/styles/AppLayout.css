@@ -1,3 +1,7 @@
-.app-layout{display:flex;flex-direction:column;height:100vh;}
-.app-body{display:flex;flex:1;min-height:0;} /* allow children to scroll */
-.app-main{flex:1;padding:28px;overflow:auto;background:#fff;} /* pages have white bg */
+.app-layout{display:flex;flex-direction:column;min-height:100vh;}
+.app-body{display:flex;flex:1;min-height:0;margin-top:60px;} /* Add top margin for fixed topbar */
+.app-main{flex:1;padding:28px;background:var(--bg);color:var(--text);margin-left:200px;} /* Add left margin for fixed sidebar */
+
+@media (max-width:880px){
+  .app-main{margin-left:64px;} /* Adjust for smaller sidebar on mobile */
+}

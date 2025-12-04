@@ -5,10 +5,12 @@ import java.sql.SQLException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Component;
 
 import com.example.SwapSphere.Entities.WantedItem;
 import com.example.SwapSphere.Services.UserService;
 
+@Component
 public class WantedItemRowMapper implements RowMapper<WantedItem> {
     @Autowired
     private UserService userService;
@@ -21,7 +23,6 @@ public class WantedItemRowMapper implements RowMapper<WantedItem> {
         item.setUser(userService.getUserById(rs.getString("username")));
 
         item.setTitle(rs.getString("title"));
-        item.setPriority(rs.getInt("priority"));
         item.setCategory(rs.getString("category"));
         item.setDescription(rs.getString("description"));
         item.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());

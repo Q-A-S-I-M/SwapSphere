@@ -4,10 +4,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Component;
 
 import com.example.SwapSphere.Entities.RefreshToken;
 import com.example.SwapSphere.Entities.User;
 
+@Component
 public class RefreshTokenRowMapper implements RowMapper<RefreshToken> {
     @Override
     public RefreshToken mapRow(ResultSet rs, int rowNum) throws SQLException {

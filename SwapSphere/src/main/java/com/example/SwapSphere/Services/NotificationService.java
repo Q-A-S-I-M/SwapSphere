@@ -19,6 +19,7 @@ public interface NotificationService {
     void tokensBought(User username, int tokens);
 
     void tokenTransfer(String username1, User username2, int tokens);
+    void generatePriorityIncreaseNotification(User user, String title);
 
     void generateReviewNotification(Rating rating);
     

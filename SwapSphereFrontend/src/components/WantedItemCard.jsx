@@ -25,7 +25,6 @@ export default function WantedItemCard({ item, isOwn=false, onDelete }) {
             <div><strong>Title:</strong> {item.title || item.name}</div>
             <div><strong>Description:</strong> {item.description}</div>
             <div><strong>Category:</strong> {item.category}</div>
-            {isOwn && <div><strong>Priority:</strong> {item.priority}</div>}
             <div><strong>Created At:</strong> {new Date(item.createdAt).toLocaleString()}</div>
           </div>
         </Modal>

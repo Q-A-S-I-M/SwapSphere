@@ -59,7 +59,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 String username = jwtService.extractUsername(token);
                 System.out.println("👤 Extracted username: " + username);
             
-                if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                if (username != null) {
+                    // Always update authentication if we have a valid token, regardless of existing auth
                     var userDetails = userDetailsService.loadUserByUsername(username);
                 
                     UsernamePasswordAuthenticationToken authentication =
@@ -72,9 +73,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     if (auth != null && auth.isAuthenticated()) {
                         System.out.println("✅ Authenticated user: " + auth.getName());
                     }
+                } else {
+                    System.out.println("⚠️ Username is null, cannot authenticate");
                 }
             } else {
                 System.out.println("❌ Invalid JWT token");
+                // Clear authentication if token is invalid
+                SecurityContextHolder.clearContext();
+            }
+        } else {
+            System.out.println("⚠️ No token found in request");
+            // For authenticated endpoints, clear context if no token
+            // This ensures expired/invalid tokens don't persist
+            if (request.getRequestURI().startsWith("/offer-items/increase-priority")) {
+                SecurityContextHolder.clearContext();
             }
         }
     

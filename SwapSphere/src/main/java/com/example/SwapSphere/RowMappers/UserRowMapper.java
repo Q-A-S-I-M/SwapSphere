@@ -21,6 +21,8 @@ public class UserRowMapper implements RowMapper<User> {
         u.setCreatedAt(rs.getTimestamp("created_at"));
         u.setLocLat(rs.getDouble("latitude"));
         u.setLocLong(rs.getDouble("longitude"));
+        u.setCountry(rs.getString("country"));
+        u.setCity(rs.getString("city"));
         u.setProfilePicUrl(rs.getString("profile_pic_url"));
         return u;
     }

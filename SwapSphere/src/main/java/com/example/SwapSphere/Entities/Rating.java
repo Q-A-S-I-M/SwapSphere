@@ -37,10 +37,6 @@ public class Rating {
     private int score;
     private String review;
 
-    @ManyToOne
-    @JoinColumn(name = "swap_id", nullable = false, referencedColumnName = "swap_id")
-    private Swap swap;
-
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 }

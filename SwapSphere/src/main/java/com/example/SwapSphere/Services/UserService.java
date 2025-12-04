@@ -17,4 +17,6 @@ public interface UserService{
     public void deleteUser(String username);
 
     public User login(Login_Request login_Request);
+
+    public List<User> searchUsers(String self, String username);
 }

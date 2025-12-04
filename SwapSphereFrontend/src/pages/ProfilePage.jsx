@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import "../styles/ProfilePage.css";
 import ItemTabs from "../components/ItemTabs";
 import OfferedItemCard from "../components/OfferedItemCard";
@@ -9,7 +10,12 @@ import axios from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 
 export default function ProfilePage() {
+  const { username: urlUsername } = useParams();
   const { user: authUser, updateUser } = useAuth();
+  
+  // Determine which username to display: URL param (viewing other user) or logged-in user (own profile)
+  const targetUsername = urlUsername || authUser?.username;
+  const isOwnProfile = !urlUsername || urlUsername === authUser?.username;
   const [user, setUser] = useState(null);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
 
@@ -50,25 +56,43 @@ export default function ProfilePage() {
     title: "",
     description: "",
     category: "",
-    priority: 0,
-    status: "Available",
   });
 
   // Fetch user, items, ratings
   useEffect(() => {
-    if (!authUser?.username) return;
+    if (!targetUsername) return;
 
     let isMounted = true;
 
     const fetchUserData = async () => {
       try {
-        const res = await axios.get(`/users/${authUser.username}`);
+        const res = await axios.get(`/users/${targetUsername}`);
         if (!isMounted) return;
 
         const userData = res.data;
-        userData.profilePic = userData.profilePic || userData.profilePicUrl || null;
+        console.log("Backend User Data:", userData); // Debug: see what backend sends
+        
+        // Backend returns: username, fullName, email, contact, role, rating, createdAt, locLat, locLong, country, city, profilePicUrl
+        // Properly unpack all fields from backend response
+        const profilePicUrl = userData.profilePicUrl || null;
 
-        setUser(userData);
+        // Store user data exactly as backend sends it
+        setUser({
+          username: userData.username || "",
+          fullName: userData.fullName || "",
+          email: userData.email || "",
+          contact: userData.contact || "",
+          role: userData.role || "",
+          rating: userData.rating || 0,
+          createdAt: userData.createdAt || null,
+          locLat: userData.locLat || null,
+          locLong: userData.locLong || null,
+          country: userData.country || "",
+          city: userData.city || "",
+          profilePicUrl: profilePicUrl,
+        });
+        
+        // Initialize form with backend data
         setProfileForm({
           fullName: userData.fullName || "",
           email: userData.email || "",
@@ -79,18 +103,42 @@ export default function ProfilePage() {
           locLat: userData.locLat || null,
           locLong: userData.locLong || null,
         });
-        setProfilePicPreview(userData.profilePic);
+        setProfilePicPreview(profilePicUrl);
 
         const [offeredRes, wantedRes, ratingsRes] = await Promise.all([
-          axios.get(`/offer-items/user-item/${authUser.username}`),
-          axios.get(`/wanted-items/user-item/${authUser.username}`),
-          axios.get(`/ratings/user/${authUser.username}`),
+          axios.get(`/offer-items/user-item/${targetUsername}`),
+          axios.get(`/wanted-items/user-item/${targetUsername}`),
+          axios.get(`/ratings/user/${targetUsername}`),
         ]);
         if (!isMounted) return;
 
-        setOfferedItems(offeredRes.data);
-        setWantedItems(wantedRes.data);
-        setRatings(ratingsRes.data);
+        // Transform OfferedItemWithImages from backend: { offeredItem: {...}, images: [...] }
+        // to flat structure expected by frontend: { ...offeredItem, images: [...] }
+        const offeredItemsRaw = offeredRes.data || [];
+        console.log("Backend Offered Items (raw):", offeredItemsRaw); // Debug
+        
+        const transformedOfferedItems = offeredItemsRaw.map(item => {
+          if (item.offeredItem) {
+            // Backend returns nested structure
+            return {
+              ...item.offeredItem,
+              images: item.images || []
+            };
+          }
+          // Already flat or different structure
+          return item;
+        });
+        console.log("Transformed Offered Items:", transformedOfferedItems); // Debug
+        
+        setOfferedItems(transformedOfferedItems);
+        
+        const wantedItemsRaw = wantedRes.data || [];
+        console.log("Backend Wanted Items:", wantedItemsRaw); // Debug
+        setWantedItems(wantedItemsRaw);
+        
+        const ratingsRaw = ratingsRes.data || [];
+        console.log("Backend Ratings:", ratingsRaw); // Debug
+        setRatings(ratingsRaw);
       } catch (err) {
         console.error("Error fetching profile data", err);
         alert("Failed to load profile data");
@@ -99,7 +147,9 @@ export default function ProfilePage() {
 
     fetchUserData();
 
-    return () => { isMounted = false; };
+    return () => { 
+      isMounted = false; 
+    };
   }, [authUser]);
 
   // Profile handlers
@@ -111,54 +161,163 @@ export default function ProfilePage() {
   const handleProfilePicChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert("Please select an image file");
+      return;
+    }
+    
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image size should be less than 5MB");
+      return;
+    }
+    
     setProfileForm(prev => ({ ...prev, profilePicFile: file }));
-    setProfilePicPreview(URL.createObjectURL(file));
+    const previewURL = URL.createObjectURL(file);
+    setProfilePicPreview(previewURL);
+  };
+  
+  const handleCloseProfileModal = () => {
+    setProfileModalOpen(false);
+    // Reset form to original user data from backend
+    if (user) {
+      setProfileForm({
+        fullName: user.fullName || "",
+        email: user.email || "",
+        contact: user.contact || "",
+        country: user.country || "",
+        city: user.city || "",
+        profilePicFile: null,
+        locLat: user.locLat !== undefined ? user.locLat : null,
+        locLong: user.locLong !== undefined ? user.locLong : null,
+      });
+      setProfilePicPreview(user.profilePicUrl || null);
+    }
+  };
+  
+  // Initialize profile form when opening modal
+  const handleOpenProfileModal = () => {
+    if (user) {
+      setProfileForm({
+        fullName: user.fullName || "",
+        email: user.email || "",
+        contact: user.contact || "",
+        country: user.country || "",
+        city: user.city || "",
+        profilePicFile: null,
+        locLat: user.locLat !== undefined ? user.locLat : null,
+        locLong: user.locLong !== undefined ? user.locLong : null,
+      });
+      setProfilePicPreview(user.profilePicUrl || null);
+    }
+    setProfileModalOpen(true);
   };
 
   const handleSaveProfile = async () => {
     try {
-      if (!user?.username) return;
+      if (!user?.username) {
+        alert("User not found");
+        return;
+      }
 
-      let profilePicURL = user.profilePic;
+      // Validation
+      if (!profileForm.fullName || !profileForm.email || !profileForm.contact) {
+        alert("Please fill in all required fields (Full Name, Email, Contact)");
+        return;
+      }
 
+      // Handle profile picture upload first (separate from user update)
+      let newProfilePicUrl = user.profilePicUrl || null;
+      
       if (profileForm.profilePicFile) {
-        const formData = new FormData();
-        formData.append("file", profileForm.profilePicFile);
-        formData.append("username", user.username);
-        const res = await axios.put("/api/images/upload-profile-pic", formData);
-        profilePicURL = res.data;
+        try {
+          const formData = new FormData();
+          formData.append("file", profileForm.profilePicFile);
+          formData.append("username", user.username);
+          const res = await axios.put("/api/images/upload-profile-pic", formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          });
+          newProfilePicUrl = res.data; // Backend returns the URL string directly
+        } catch (uploadErr) {
+          console.error("Error uploading profile picture:", uploadErr);
+          alert("Failed to upload profile picture. Profile will be updated without picture change.");
+        }
       }
 
-      let locLat = profileForm.locLat;
-      let locLong = profileForm.locLong;
-      if (navigator.geolocation) {
-        const pos = await new Promise((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject);
-        });
-        locLat = pos.coords.latitude;
-        locLong = pos.coords.longitude;
-      }
+      // Keep existing location values if form doesn't have them
+      let locLat = profileForm.locLat !== null && profileForm.locLat !== undefined ? profileForm.locLat : user.locLat;
+      let locLong = profileForm.locLong !== null && profileForm.locLong !== undefined ? profileForm.locLong : user.locLong;
 
-      const updatedUser = {
-        ...user,
-        fullName: profileForm.fullName,
-        email: profileForm.email,
-        contact: profileForm.contact,
-        country: profileForm.country,
-        city: profileForm.city,
-        profilePic: profilePicURL,
-        locLat,
-        locLong,
+      // Fetch current user data from backend to get all required fields (including password)
+      // This ensures we have all required fields for the update
+      const currentUserRes = await axios.get(`/users/${user.username}`);
+      const currentUserData = currentUserRes.data;
+
+      // Backend updateUser requires all User entity fields (even if not updating them)
+      // Include existing user data for fields that aren't being updated
+      const updatedUserPayload = {
+        username: user.username, // Required field
+        fullName: profileForm.fullName || currentUserData.fullName,
+        email: profileForm.email || currentUserData.email,
+        password: currentUserData.password || "", // Required field - use existing password from backend
+        contact: profileForm.contact || currentUserData.contact,
+        role: currentUserData.role || "USER", // Required field
+        rating: currentUserData.rating || 0, // Required field
+        createdAt: currentUserData.createdAt || null, // Required field
+        country: profileForm.country !== undefined ? (profileForm.country || null) : (currentUserData.country || null),
+        city: profileForm.city !== undefined ? (profileForm.city || null) : (currentUserData.city || null),
+        locLat: locLat !== null && locLat !== undefined ? locLat : (currentUserData.locLat || null),
+        locLong: locLong !== null && locLong !== undefined ? locLong : (currentUserData.locLong || null),
+        profilePicUrl: newProfilePicUrl || currentUserData.profilePicUrl || null,
       };
-
-      await axios.put(`/users/${user.username}`, updatedUser);
-      setUser(updatedUser);
-      updateUser(updatedUser);
+      console.log("Updated User Payload:", updatedUserPayload);
+      await axios.put(`/users/${user.username}`, updatedUserPayload);
+      
+      // Refresh user data from backend to get all fields including potentially updated profilePicUrl
+      const userRes = await axios.get(`/users/${user.username}`);
+      const refreshedUserData = userRes.data;
+      
+      // Store user data exactly as backend sends it
+      const refreshedUser = {
+        username: refreshedUserData.username || "",
+        fullName: refreshedUserData.fullName || "",
+        email: refreshedUserData.email || "",
+        contact: refreshedUserData.contact || "",
+        role: refreshedUserData.role || "",
+        rating: refreshedUserData.rating || 0,
+        createdAt: refreshedUserData.createdAt || null,
+        locLat: refreshedUserData.locLat || null,
+        locLong: refreshedUserData.locLong || null,
+        country: refreshedUserData.country || "",
+        city: refreshedUserData.city || "",
+        profilePicUrl: newProfilePicUrl || refreshedUserData.profilePicUrl || null,
+      };
+      
+      setUser(refreshedUser);
+      updateUser(refreshedUser);
       setProfileModalOpen(false);
-      setProfilePicPreview(profilePicURL);
+      setProfilePicPreview(refreshedUser.profilePicUrl);
+      
+      // Reset form with refreshed data
+      setProfileForm({
+        fullName: refreshedUser.fullName || "",
+        email: refreshedUser.email || "",
+        contact: refreshedUser.contact || "",
+        country: refreshedUser.country || "",
+        city: refreshedUser.city || "",
+        profilePicFile: null,
+        locLat: refreshedUser.locLat || null,
+        locLong: refreshedUser.locLong || null,
+      });
+      
+      alert("Profile updated successfully!");
     } catch (err) {
       console.error(err);
-      alert("Error updating profile");
+      alert("Error updating profile: " + (err.response?.data?.message || err.message));
     }
   };
 
@@ -174,28 +333,58 @@ export default function ProfilePage() {
 
   const handleAddOfferedItem = async () => {
     try {
+      if (!offeredForm.title || !offeredForm.category) {
+        alert("Please fill in required fields (Title, Category)");
+        return;
+      }
+
       const itemPayload = {
         user: {
           username: user.username,
         },
         title: offeredForm.title,
-        description: offeredForm.description,
+        description: offeredForm.description || "",
         category: offeredForm.category,
-        condition: offeredForm.condition,
-        priority: offeredForm.priority,
-        status: offeredForm.status
+        condition: offeredForm.condition || "Good",
+        priority: offeredForm.priority || 0,
+        status: offeredForm.status || "Available"
       };
       const res = await axios.post("/offer-items", itemPayload);
       const newItem = res.data;
 
-      for (let img of offeredForm.images) {
-        const formData = new FormData();
-        formData.append("file", img);
-        formData.append("id", newItem.offeredItemId);
-        await axios.post("/api/images/upload", formData);
+      // Upload images if any
+      if (offeredForm.images && offeredForm.images.length > 0) {
+        for (let img of offeredForm.images) {
+          try {
+            const formData = new FormData();
+            formData.append("file", img);
+            formData.append("id", newItem.offeredItemId);
+            await axios.post("/api/images/upload", formData, {
+              headers: {
+                'Content-Type': 'multipart/form-data',
+              },
+            });
+          } catch (uploadErr) {
+            console.error("Error uploading image:", uploadErr);
+          }
+        }
       }
 
-      setOfferedItems(prev => [...prev, newItem]);
+      // Refresh items to get the new item with images
+      const refreshedRes = await axios.get(`/offer-items/user-item/${targetUsername}`);
+      const refreshedOfferedItemsRaw = refreshedRes.data || [];
+      // Transform nested structure to flat structure
+      const refreshedOfferedItems = refreshedOfferedItemsRaw.map(item => {
+        if (item.offeredItem) {
+          return {
+            ...item.offeredItem,
+            images: item.images || []
+          };
+        }
+        return item;
+      });
+      setOfferedItems(refreshedOfferedItems);
+      
       setAddOfferedModal(false);
       setOfferedForm({
         title: "",
@@ -207,24 +396,59 @@ export default function ProfilePage() {
         images: [],
         imagePreviews: [],
       });
+      
+      alert("Offered item added successfully!");
     } catch (err) {
       console.error(err);
-      alert("Error adding offered item");
+      alert("Error adding offered item: " + (err.response?.data?.message || err.message));
     }
   };
 
   // Wanted item handlers
   const handleAddWantedItem = async () => {
     try {
-      const payload = { ...wantedForm, user:{username: user.username} };
+      if (!wantedForm.title || !wantedForm.category) {
+        alert("Please fill in required fields (Title, Category)");
+        return;
+      }
+
+      const payload = { 
+        ...wantedForm, 
+        user: { username: user.username }
+      };
       const res = await axios.post("/wanted-items", payload);
-      setWantedItems(prev => [...prev, res.data]);
+      
+      // Refresh items
+      const refreshedRes = await axios.get(`/wanted-items/user-item/${targetUsername}`);
+      setWantedItems(refreshedRes.data || []);
+      
       setAddWantedModal(false);
-      setWantedForm({ title: "", description: "", category: "", priority: 0, status: "Available" });
+      setWantedForm({ title: "", description: "", category: ""});
+      
+      alert("Wanted item added successfully!");
     } catch (err) {
       console.error(err);
-      alert("Error adding wanted item");
+      alert("Error adding wanted item: " + (err.response?.data?.message || err.message));
     }
+  };
+  
+  const handleCloseOfferedModal = () => {
+    setAddOfferedModal(false);
+    setOfferedForm({
+      title: "",
+      description: "",
+      category: "",
+      condition: "",
+      priority: 0,
+      status: "Available",
+      images: [],
+      imagePreviews: [],
+    });
+  };
+  
+  const handleCloseWantedModal = () => {
+    setAddWantedModal(false);
+    setWantedForm({ title: "", description: "", category: ""});
   };
 
   const deleteOffered = async (id) => {
@@ -239,14 +463,22 @@ export default function ProfilePage() {
     setWantedItems(prev => prev.filter(it => it.wantedItemId !== id));
   };
 
+  if (!user) {
+    return (
+      <div className="profile-page-root">
+        <div className="empty-note">Loading profile...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="profile-page-root">
       {/* Header */}
       <div className="profile-header-panel">
         <div className="profile-header-left">
           <div className="avatar-large">
-            {user?.profilePic ? (
-              <img src={user.profilePic} alt="avatar" />
+            {user?.profilePicUrl ? (
+              <img src={user.profilePicUrl} alt="avatar" />
             ) : (
               <div className="avatar-fallback">{user?.username?.charAt(0).toUpperCase() || "U"}</div>
             )}
@@ -263,9 +495,11 @@ export default function ProfilePage() {
             <div><strong>Rating:</strong> {user?.rating || 0}</div>
           </div>
         </div>
-        <div className="profile-action-col">
-            <button className="btn-edit-profile" onClick={() => setProfileModalOpen(true)}>Edit Profile</button>
+        {isOwnProfile && (
+          <div className="profile-action-col">
+            <button className="btn-edit-profile" onClick={handleOpenProfileModal}>Edit Profile</button>
           </div>
+        )}
       </div>
 
       {/* Tabs */}
@@ -274,6 +508,7 @@ export default function ProfilePage() {
         wantedCount={wantedItems.length}
         ratingsCount={ratings.length}
         renderAddButton={(activeTab) => {
+          if (!isOwnProfile) return null;
           if (activeTab === "offered") return <button className="btn-add-item" onClick={() => setAddOfferedModal(true)}>+ Add Offered Item</button>;
           if (activeTab === "wanted") return <button className="btn-add-item" onClick={() => setAddWantedModal(true)}>+ Add Wanted Item</button>;
           return null;
@@ -281,21 +516,77 @@ export default function ProfilePage() {
         renderContent={(activeTab) => {
           if (activeTab === "offered") return (
             <div className="items-list">
-              {offeredItems.map(it => (
-                <OfferedItemCard key={it.offeredItemId} item={it} isOwnProfile={true} onDelete={() => deleteOffered(it.offeredItemId)} />
-              ))}
+              {offeredItems.length === 0 ? (
+                <div className="empty-note">No offered items yet. Click "+ Add Offered Item" to add one.</div>
+              ) : (
+                offeredItems.map(it => (
+                  <OfferedItemCard key={it.offeredItemId} item={it} isOwnProfile={isOwnProfile} onDelete={isOwnProfile ? () => deleteOffered(it.offeredItemId) : undefined} />
+                ))
+              )}
             </div>
           );
           if (activeTab === "wanted") return (
             <div className="items-list">
-              {wantedItems.map(it => (
-                <WantedItemCard key={it.wantedItemId} item={it} isOwn={true} onDelete={() => deleteWanted(it.wantedItemId)} />
-              ))}
+              {wantedItems.length === 0 ? (
+                <div className="empty-note">No wanted items yet. Click "+ Add Wanted Item" to add one.</div>
+              ) : (
+                wantedItems.map(it => (
+                  <WantedItemCard key={it.wantedItemId} item={it} isOwn={isOwnProfile} onDelete={isOwnProfile ? () => deleteWanted(it.wantedItemId) : undefined} />
+                ))
+              )}
             </div>
           );
           if (activeTab === "ratings") return (
             <div className="items-list">
-              {ratings.map(r => <RatingCard key={r.ratingId} rating={r} />)}
+              {ratings.length === 0 ? (
+                <div className="empty-note">No ratings yet.</div>
+              ) : (
+                ratings.map(r => (
+                  <RatingCard 
+                    key={r.ratingId} 
+                    rating={r} 
+                    currentUsername={authUser?.username}
+                    onDelete={async (ratingId) => {
+                      if (!authUser?.username) {
+                        alert("You must be logged in to delete reviews");
+                        return;
+                      }
+                      try {
+                        await axios.delete(`/ratings/${ratingId}`, {
+                          params: { username: authUser.username }
+                        });
+                        
+                        // Refresh ratings and user data to show updated rating
+                        const [ratingsRes, userRes] = await Promise.all([
+                          axios.get(`/ratings/user/${targetUsername}`),
+                          axios.get(`/users/${targetUsername}`)
+                        ]);
+                        
+                        setRatings(ratingsRes.data || []);
+                        
+                        const userData = userRes.data;
+                        setUser({
+                          ...user,
+                          rating: userData.rating || user.rating
+                        });
+                        
+                        if (isOwnProfile) {
+                          updateUser({
+                            ...authUser,
+                            rating: userData.rating || authUser.rating
+                          });
+                        }
+                        
+                        alert("Review deleted successfully");
+                      } catch (err) {
+                        console.error("Error deleting rating:", err);
+                        const errorMsg = err.response?.data || err.message || "Failed to delete review";
+                        alert("Failed to delete review: " + errorMsg);
+                      }
+                    }}
+                  />
+                ))
+              )}
             </div>
           );
         }}
@@ -303,29 +594,71 @@ export default function ProfilePage() {
 
       {/* Profile Modal */}
       {profileModalOpen && (
-        <Modal onClose={() => setProfileModalOpen(false)} title="Edit Profile">
-          <input className="profile-input-edit" type="text" name="fullName" placeholder="Full name" value={profileForm.fullName} onChange={handleProfileChange} />
-          <input className="profile-input-edit" type="email" name="email" placeholder="Email" value={profileForm.email} onChange={handleProfileChange} />
-          <input className="profile-input-edit" type="text" name="contact" placeholder="Contact" value={profileForm.contact} onChange={handleProfileChange} />
-          <input className="profile-input-edit" type="text" name="country" placeholder="Country" value={profileForm.country} onChange={handleProfileChange} />
-          <input className="profile-input-edit" type="text" name="city" placeholder="City" value={profileForm.city} onChange={handleProfileChange} />
-          <input className="profile-input-edit" type="file" accept="image/*" onChange={handleProfilePicChange} />
-          {profilePicPreview && <img src={profilePicPreview} alt="Preview" className="profile-pic-preview" />}
+        <Modal onClose={handleCloseProfileModal} title="Edit Profile">
+          <div>
+            <label>Full Name *</label>
+            <input className="profile-input-edit" type="text" name="fullName" placeholder="Enter full name" value={profileForm.fullName} onChange={handleProfileChange} />
+          </div>
+          <div>
+            <label>Email *</label>
+            <input className="profile-input-edit" type="email" name="email" placeholder="Enter email" value={profileForm.email} onChange={handleProfileChange} />
+          </div>
+          <div>
+            <label>Contact *</label>
+            <input className="profile-input-edit" type="text" name="contact" placeholder="Enter contact number" value={profileForm.contact} onChange={handleProfileChange} />
+          </div>
+          <div>
+            <label>Country</label>
+            <input className="profile-input-edit" type="text" name="country" placeholder="Enter country" value={profileForm.country} onChange={handleProfileChange} />
+          </div>
+          <div>
+            <label>City</label>
+            <input className="profile-input-edit" type="text" name="city" placeholder="Enter city" value={profileForm.city} onChange={handleProfileChange} />
+          </div>
+          <div>
+            <label>Profile Picture</label>
+            <input className="profile-input-edit" type="file" accept="image/*" onChange={handleProfilePicChange} />
+            {profilePicPreview && (
+              <div style={{ marginTop: '12px' }}>
+                <img src={profilePicPreview} alt="Preview" className="profile-pic-preview" />
+              </div>
+            )}
+          </div>
           <button className="btn-confirm-profile" onClick={handleSaveProfile}>Save Profile</button>
         </Modal>
       )}
 
       {/* Add Offered Item Modal */}
       {addOfferedModal && (
-        <Modal onClose={() => setAddOfferedModal(false)} title="Add Offered Item">
-          <input className="profile-input-edit" placeholder="Title" value={offeredForm.title} onChange={(e) => setOfferedForm({...offeredForm, title: e.target.value})} />
-          <input className="profile-input-edit" placeholder="Description" value={offeredForm.description} onChange={(e) => setOfferedForm({...offeredForm, description: e.target.value})} />
-          <input className="profile-input-edit" placeholder="Category" value={offeredForm.category} onChange={(e) => setOfferedForm({...offeredForm, category: e.target.value})} />
-          <input className="profile-input-edit" placeholder="Condition" value={offeredForm.condition} onChange={(e) => setOfferedForm({...offeredForm, condition: e.target.value})} />
-          <input className="profile-input-edit" type="number" placeholder="Priority" value={offeredForm.priority} onChange={(e) => setOfferedForm({...offeredForm, priority: Number(e.target.value)})} />
-          <input className="profile-input-edit" type="file" multiple accept="image/*" onChange={handleOfferedImageChange} />
-          <div className="offered-images-thumbnails">
-            {offeredForm.imagePreviews.map((src, idx) => <img key={idx} src={src} alt="preview" />)}
+        <Modal onClose={handleCloseOfferedModal} title="Add Offered Item">
+          <div>
+            <label>Title *</label>
+            <input className="profile-input-edit" placeholder="Enter item title" value={offeredForm.title} onChange={(e) => setOfferedForm({...offeredForm, title: e.target.value})} />
+          </div>
+          <div>
+            <label>Description</label>
+            <textarea className="profile-input-edit" placeholder="Enter item description" value={offeredForm.description} onChange={(e) => setOfferedForm({...offeredForm, description: e.target.value})} rows="3" style={{ resize: 'vertical' }} />
+          </div>
+          <div>
+            <label>Category *</label>
+            <input className="profile-input-edit" placeholder="Enter category" value={offeredForm.category} onChange={(e) => setOfferedForm({...offeredForm, category: e.target.value})} />
+          </div>
+          <div>
+            <label>Condition</label>
+            <input className="profile-input-edit" placeholder="e.g., New, Good, Fair" value={offeredForm.condition} onChange={(e) => setOfferedForm({...offeredForm, condition: e.target.value})} />
+          </div>
+          <div>
+            <label>Priority</label>
+            <input className="profile-input-edit" type="number" placeholder="Enter priority (0-10)" value={offeredForm.priority} min="0" max="10" onChange={(e) => setOfferedForm({...offeredForm, priority: Number(e.target.value)})} />
+          </div>
+          <div>
+            <label>Images (up to 10)</label>
+            <input className="profile-input-edit" type="file" multiple accept="image/*" onChange={handleOfferedImageChange} />
+            {offeredForm.imagePreviews.length > 0 && (
+              <div className="offered-images-thumbnails" style={{ marginTop: '12px' }}>
+                {offeredForm.imagePreviews.map((src, idx) => <img key={idx} src={src} alt="preview" />)}
+              </div>
+            )}
           </div>
           <button className="btn-confirm-profile" onClick={handleAddOfferedItem}>Add Offered Item</button>
         </Modal>
@@ -333,11 +666,19 @@ export default function ProfilePage() {
 
       {/* Add Wanted Item Modal */}
       {addWantedModal && (
-        <Modal onClose={() => setAddWantedModal(false)} title="Add Wanted Item">
-          <input className="profile-input-edit" placeholder="Title" value={wantedForm.title} onChange={(e) => setWantedForm({...wantedForm, title: e.target.value})} />
-          <input className="profile-input-edit" placeholder="Description" value={wantedForm.description} onChange={(e) => setWantedForm({...wantedForm, description: e.target.value})} />
-          <input className="profile-input-edit" placeholder="Category" value={wantedForm.category} onChange={(e) => setWantedForm({...wantedForm, category: e.target.value})} />
-          <input className="profile-input-edit" type="number" placeholder="Priority" value={wantedForm.priority} onChange={(e) => setWantedForm({...wantedForm, priority: Number(e.target.value)})} />
+        <Modal onClose={handleCloseWantedModal} title="Add Wanted Item">
+          <div>
+            <label>Title *</label>
+            <input className="profile-input-edit" placeholder="Enter item title" value={wantedForm.title} onChange={(e) => setWantedForm({...wantedForm, title: e.target.value})} />
+          </div>
+          <div>
+            <label>Description</label>
+            <textarea className="profile-input-edit" placeholder="Enter item description" value={wantedForm.description} onChange={(e) => setWantedForm({...wantedForm, description: e.target.value})} rows="3" style={{ resize: 'vertical' }} />
+          </div>
+          <div>
+            <label>Category *</label>
+            <input className="profile-input-edit" placeholder="Enter category" value={wantedForm.category} onChange={(e) => setWantedForm({...wantedForm, category: e.target.value})} />
+          </div>
           <button className="btn-confirm-profile" onClick={handleAddWantedItem}>Add Wanted Item</button>
         </Modal>
       )}

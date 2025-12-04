@@ -5,6 +5,7 @@ import DashboardPage from "../pages/DashboardPage";
 import ProfilePage from "../pages/ProfilePage";
 import SearchPage from "../pages/SearchPage";
 import NotificationPage from "../pages/NotificationPage";
+import RequestsPage from "../pages/RequestsPage";
 import AppLayout from "../layout/AppLayout";
 import { useAuth } from "../context/AuthContext";
 import UserWalletPage from "../pages/UserWalletPage";
@@ -13,7 +14,7 @@ export default function AppRouter() {
   const { user } = useAuth();
 
   return (
-    <BrowserRouter>
+    <Router>
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<LoginPage />} />
@@ -36,6 +37,14 @@ export default function AppRouter() {
             </AppLayout>
           }
         />
+        <Route
+          path="/profile/:username"
+          element={
+            <AppLayout>
+              <ProfilePage />
+            </AppLayout>
+          }
+        />
 
         <Route
           path="/search"
@@ -46,12 +55,12 @@ export default function AppRouter() {
           }
         />
 
-        {/* Requests / Wallet / Chat placeholders */}
+        {/* Requests Page */}
         <Route
           path="/requests"
           element={
             <AppLayout>
-              <div style={{ padding: 24, background: "#fff" }}>Requests (placeholder)</div>
+              <RequestsPage />
             </AppLayout>
           }
         />
@@ -60,7 +69,7 @@ export default function AppRouter() {
           path="/wallet"
           element={
             <AppLayout>
-              <UserWalletPage username={user?.username} />
+              <UserWalletPage />
             </AppLayout>
           }
         />
@@ -87,6 +96,6 @@ export default function AppRouter() {
         {/* fallback */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
-    </BrowserRouter>
+    </Router>
   );
 }

@@ -45,8 +45,8 @@ public class OfferedItemsController {
         return ResponseEntity.ok(offeredItemsService.updateItemStatus(id, item));
     }
     @PutMapping("/update-priority/{id}")
-    public ResponseEntity<OfferedItem> updateItemPriority(@PathVariable Long id, @RequestBody int item) {
-        return ResponseEntity.ok(offeredItemsService.updateItemPriority(id, item));
+    public ResponseEntity<OfferedItem> updateItemPriority(@PathVariable Long id, @RequestBody String username) {
+        return ResponseEntity.ok(offeredItemsService.updateItemPriority(id, username));
     }
 
     @DeleteMapping("/{id}")

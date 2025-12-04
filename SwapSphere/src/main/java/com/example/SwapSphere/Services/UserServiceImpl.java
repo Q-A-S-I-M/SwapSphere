@@ -4,7 +4,6 @@ import java.sql.Timestamp;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -37,13 +36,13 @@ public class UserServiceImpl implements UserService{
     @Override
     public User getUserById(String username) {
         String sql = "SELECT * FROM Users WHERE username = ?";
-        return template.queryForObject(sql, new BeanPropertyRowMapper<>(User.class), username);
+        return template.queryForObject(sql, new UserRowMapper(), username);
     }
 
     @Override
     public List<User> getAllUsers() {
         String sql = "SELECT * FROM Users";
-        return template.query(sql, new BeanPropertyRowMapper<>(User.class));
+        return template.query(sql, new UserRowMapper());
     }
 
     @Override
@@ -55,6 +54,7 @@ public class UserServiceImpl implements UserService{
                 contact = ?, 
                 longitude = ?, 
                 latitude = ?,
+                rating = ?,
                 country = ?,
                 city = ?
             WHERE username = ?
@@ -66,6 +66,7 @@ public class UserServiceImpl implements UserService{
                 user.getContact(),
                 user.getLocLong(),
                 user.getLocLat(),
+                user.getRating(),
                 user.getCountry(),
                 user.getCity(),
                 username
@@ -94,6 +95,11 @@ public class UserServiceImpl implements UserService{
                 throw new RuntimeException("Wrong Password!");
             }
         }
+    }
+    @Override
+    public List<User> searchUsers(String self, String query) {
+        String sql = "SELECT * FROM Users WHERE (username LIKE ? OR full_name LIKE ?) AND username != ?";
+        return template.query(sql, new UserRowMapper(), "%" + query + "%", "%" + query + "%", self);
     }
 
 }

@@ -9,19 +9,32 @@ import org.springframework.stereotype.Service;
 
 import com.example.SwapSphere.Entities.OfferedItem;
 import com.example.SwapSphere.Entities.User;
+import com.example.SwapSphere.RowMappers.OfferedItemRowMapper;
 
 @Service
 public class SearchServiceImpl implements SearchService{
     @Autowired
     JdbcTemplate template;
+    
+    @Autowired
+    OfferedItemRowMapper offeredItemRowMapper;
 
     @Override
     public List<OfferedItem> searchItems(String keyword, String username) {
-        String sql = "SELECT * FROM offered_items WHERE username != ? AND (LOWER(title) LIKE LOWER(?) OR LOWER(description) LIKE LOWER(?) OR LOWER(category) LIKE LOWER(?)) ORDER BY priority DESC, created_at DESC";
+        String sql = """
+            SELECT * FROM offered_items 
+            WHERE username != ? 
+            AND status = 'Available'
+            AND (LOWER(title) LIKE LOWER(?) 
+                OR LOWER(description) LIKE LOWER(?) 
+                OR LOWER(category) LIKE LOWER(?)
+                OR LOWER(item_condition) LIKE LOWER(?))
+            ORDER BY priority DESC, created_at DESC
+            """;
         String search = "%" + keyword + "%";
 
-        return template.query(sql, new BeanPropertyRowMapper<>(OfferedItem.class), username,
-                search, search, search);
+        return template.query(sql, offeredItemRowMapper, username,
+                search, search, search, search);
     }
 
     @Override

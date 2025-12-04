@@ -1,7 +1,7 @@
 .wallet-page-root {
-  padding: 24px;
-  background: #f5f5f5;
-  min-height: 100vh;
+  padding: 0;
+  background: transparent;
+  color: var(--text);
 }
 
 .wallet-overview {
@@ -11,12 +11,20 @@
 }
 
 .wallet-card {
-  background: #fff;
+  background: var(--card);
   flex: 1;
   padding: 16px;
   border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
   text-align: center;
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.wallet-card > div:first-child {
+  color: var(--muted);
+  font-size: 14px;
+  margin-bottom: 8px;
 }
 
 .wallet-value {
@@ -49,8 +57,10 @@
 }
 
 .usage-card {
-  background: #fff;
+  background: var(--card);
   padding: 12px 16px;
   border-radius: 10px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,0.1);
 }

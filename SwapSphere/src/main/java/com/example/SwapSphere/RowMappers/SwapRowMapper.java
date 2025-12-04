@@ -6,11 +6,13 @@ import java.sql.Timestamp;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Component;
 
 import com.example.SwapSphere.Entities.Swap;
 import com.example.SwapSphere.Services.OfferedItemsService;
 import com.example.SwapSphere.Services.UserService;
 
+@Component
 public class SwapRowMapper implements RowMapper<Swap> {
     @Autowired
     private UserService userService;
@@ -27,8 +29,24 @@ public class SwapRowMapper implements RowMapper<Swap> {
         swap.setSender(userService.getUserById(rs.getString("sender")));
         swap.setReceiver(userService.getUserById(rs.getString("receiver")));
 
-        // Nested offered items
-        swap.setOfferedItem(offeredItemsService.getItemById(rs.getLong("offered_item")));
+        // Nested offered items - offered_item can be null for token-only swaps
+        Object offeredItemObj = rs.getObject("offered_item");
+        if (offeredItemObj != null) {
+            try {
+                Long offeredItemId = rs.getLong("offered_item");
+                // Check if it's a valid ID (not 0, which could be a default/null value)
+                if (offeredItemId != null && offeredItemId > 0) {
+                    swap.setOfferedItem(offeredItemsService.getItemById(offeredItemId));
+                } else {
+                    swap.setOfferedItem(null);
+                }
+            } catch (Exception e) {
+                swap.setOfferedItem(null);
+            }
+        } else {
+            swap.setOfferedItem(null);
+        }
+        
         swap.setRequestedItem(offeredItemsService.getItemById(rs.getLong("requested_item")));
 
         swap.setStatus(rs.getString("status"));

@@ -33,10 +33,6 @@ public class TokenFeatureUsage {
     @ManyToOne
     @JoinColumn(name = "offered_item_id", nullable = true, referencedColumnName = "offered_item_id")
     private OfferedItem offeredItem;
-
-    @ManyToOne
-    @JoinColumn(name = "wanted_item_id", nullable = true, referencedColumnName = "wanted_item_id")
-    private WantedItem wantedItem;
     @Column(name = "feature_type")
     private String featureType;
     @Column(name = "token_used")

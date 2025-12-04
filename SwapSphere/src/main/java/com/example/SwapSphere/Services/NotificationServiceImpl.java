@@ -3,7 +3,6 @@ package com.example.SwapSphere.Services;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
@@ -11,6 +10,7 @@ import com.example.SwapSphere.Entities.Notification;
 import com.example.SwapSphere.Entities.Rating;
 import com.example.SwapSphere.Entities.Swap;
 import com.example.SwapSphere.Entities.User;
+import com.example.SwapSphere.RowMappers.NotificationRowMapper;
 
 @Service
 public class NotificationServiceImpl implements NotificationService {
@@ -18,10 +18,13 @@ public class NotificationServiceImpl implements NotificationService {
     @Autowired
     private JdbcTemplate template;
     
+    @Autowired
+    private NotificationRowMapper notificationRowMapper;
+    
     @Override
     public List<Notification> getByUser(String username) {
         String sql = "SELECT * FROM notifications WHERE username = ? ORDER BY created_at DESC";
-        List<Notification> notifications = template.query(sql, new BeanPropertyRowMapper<>(Notification.class), username);
+        List<Notification> notifications = template.query(sql, notificationRowMapper, username);
         for (Notification notification : notifications) {
             markAsRead(notification.getNotificationId());
             notification.setRead(true);
@@ -94,5 +97,11 @@ public class NotificationServiceImpl implements NotificationService {
     public void generateReviewNotification(Rating rating) {
         String msg = rating.getRater().getUsername() +" gave you a review.";
         addNotification(new Notification(null, rating.getRatedUser(), "GREEN", msg, false, null));
+    }
+
+    @Override
+    public void generatePriorityIncreaseNotification(User user, String title) {
+        String msg = "Your item "+title+" has been increased by 5 priority.";
+        addNotification(new Notification(null, user, "GREEN", msg, false, null));
     }
 }

@@ -31,11 +31,6 @@ public class Report {
     @ManyToOne
     @JoinColumn(name = "reported_id", nullable = false, referencedColumnName = "username")
     private User reported;
-
-    @ManyToOne
-    @JoinColumn(name = "swap_id", nullable = false, referencedColumnName = "swap_id")
-    private Swap swap;
-
     private String reason;
     private String status;
 }

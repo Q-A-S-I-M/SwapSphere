@@ -5,16 +5,15 @@ import java.sql.SQLException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Component;
 
 import com.example.SwapSphere.Entities.Report;
-import com.example.SwapSphere.Services.SwapService;
 import com.example.SwapSphere.Services.UserService;
 
+@Component
 public class ReportRowMapper implements RowMapper<Report> {
     @Autowired
     private UserService userService;
-    @Autowired
-    private SwapService swapService;
 
     @Override
     public Report mapRow(ResultSet rs, int rowNum) throws SQLException {
@@ -24,8 +23,6 @@ public class ReportRowMapper implements RowMapper<Report> {
 
         rpt.setReporter(userService.getUserById(rs.getString("reporter_id")));
         rpt.setReported(userService.getUserById(rs.getString("reported_id")));
-
-        rpt.setSwap(swapService.getSwapById(rs.getLong("swap_id")));
 
         rpt.setReason(rs.getString("reason"));
         rpt.setStatus(rs.getString("status"));

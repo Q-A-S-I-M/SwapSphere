@@ -1,31 +1,59 @@
 .rating-card{
-  background:#fff9f0;
+  background:#555555;
   border-radius:10px;
-  border:1px solid #d4af37;
+  border:1px solid rgba(255, 255, 255, 0.3);
   padding:12px 16px;
   display:flex;
   gap:12px;
   align-items:flex-start;
   position:relative;
+  color: #ffffff;
 }
 .rating-left{width:180px;display:flex;flex-direction:row;align-items:center;gap:10px;}
 .rating-avatar{
-  width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid #d4af37;
+  width:48px;height:48px;border-radius:50%;object-fit:cover;border:none;
 }
 .rating-avatar-fallback{
   width:48px;height:48px;border-radius:50%;background:#b8860b;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;
 }
-.rater{font-weight:700;color:#8b6508;}
-.score{color:#555;font-size:13px;}
+.rater{font-weight:700;color:#ffffff;}
+.score{color:#ffffff;font-size:13px;opacity:0.9;}
 
-.rating-right{flex:1;color:#333;}
-.review{line-height:1.5;color:#222;}
+.rating-right{flex:1;color:#ffffff;}
+.review{line-height:1.5;color:#ffffff;}
 
 .rating-date{
   position:absolute;
   right:12px;
   top:12px;
   font-size:12px;
-  color:#a67c00;
+  color:#ffffff;
   font-weight:600;
+  opacity:0.8;
+}
+
+.rating-delete-btn {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  width: 28px;
+  height: 28px;
+  background: #dc3545;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  line-height: 1;
+  padding: 0;
+}
+
+.rating-delete-btn:hover {
+  background: #c82333;
+  transform: scale(1.1);
 }

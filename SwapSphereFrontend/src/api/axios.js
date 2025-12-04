@@ -34,15 +34,18 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
+        console.log("🔄 Attempting token refresh for 403 error...");
         // 🔁 Attempt token refresh (refresh token is stored in cookie)
         await api.post('/auth/refresh', {}, {
           withCredentials: true,
         });
 
+        console.log("✅ Token refreshed, retrying original request...");
         // 🔁 Retry the original request (cookie now has updated access token)
         return api(originalRequest);
 
       } catch (err) {
+        console.error("❌ Token refresh failed:", err);
         // 🔒 If refresh fails, call logout to invalidate refresh token (via cookie or DB)
         try {
           await api.post('/auth/logout', {}, {

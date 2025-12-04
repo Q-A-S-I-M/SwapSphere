@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.SwapSphere.DTOs.CreateSwapRequest;
+import com.example.SwapSphere.DTOs.SwapResponseDTO;
 import com.example.SwapSphere.Entities.Swap;
 import com.example.SwapSphere.Services.SwapService;
 
@@ -24,8 +26,8 @@ public class SwapController {
     private SwapService swapService;
 
     @PostMapping
-    public ResponseEntity<Swap> createSwap(@RequestBody Swap swap) {
-        return ResponseEntity.ok(swapService.createSwap(swap));
+    public ResponseEntity<Swap> createSwap(@RequestBody CreateSwapRequest request) {
+        return ResponseEntity.ok(swapService.createSwap(request));
     }
 
     @GetMapping("/{id}")
@@ -39,16 +41,21 @@ public class SwapController {
     }
 
     @GetMapping("/sender/{sender}")
-    public ResponseEntity<List<Swap>> getAllSwapsForSender(@PathVariable String sender) {
-        return ResponseEntity.ok(swapService.getAllSwapsForSender(sender));
+    public ResponseEntity<List<SwapResponseDTO>> getAllSwapsForSender(@PathVariable String sender) {
+        return ResponseEntity.ok(swapService.getAllSwapsForSenderWithImagesDTO(sender));
     }
     @GetMapping("/reciever/{reciever}")
-    public ResponseEntity<List<Swap>> getAllSwapsForReciver(@PathVariable String reciever) {
-        return ResponseEntity.ok(swapService.getAllSwapsForReciever(reciever));
+    public ResponseEntity<List<SwapResponseDTO>> getAllSwapsForReciver(@PathVariable String reciever) {
+        return ResponseEntity.ok(swapService.getAllSwapsForRecieverWithImagesDTO(reciever));
     }
 
     @PutMapping("/{id}/status")
     public ResponseEntity<Swap> updateSwapStatus(@PathVariable Long id, @RequestParam String status) {
         return ResponseEntity.ok(swapService.updateStatus(id, status));
+    }
+
+    @GetMapping("/history/{username}")
+    public ResponseEntity<List<SwapResponseDTO>> getSwapHistory(@PathVariable String username) {
+        return ResponseEntity.ok(swapService.getSwapHistoryWithImages(username));
     }
 }

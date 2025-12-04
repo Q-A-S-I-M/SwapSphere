@@ -21,7 +21,7 @@ public class TokensPaymentServiceImpl implements TokensPaymentService {
 
         String sql = """
             INSERT INTO tokens_payment
-            (username, amount_paid, tokens_purchased, created_at)
+            (username, amount_paid, token_purchased, created_at)
             VALUES (?, ?, ?, ?)
         """;
 

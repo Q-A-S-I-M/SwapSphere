@@ -19,11 +19,11 @@ public class WantedItemsServiceImpl implements WantedItemsService {
     @Override
     public WantedItem createWantedItem(WantedItem item) {
         String sql = """
-            INSERT INTO wanted_items (username, title, priority, category, description, created_at) 
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO wanted_items (username, title, category, description, created_at) 
+            VALUES (?, ?, ?, ?, ?)
         """;
         item.setCreatedAt(LocalDateTime.now());
-        template.update(sql, item.getUser().getUsername(), item.getTitle(), item.getPriority(), item.getCategory(),
+        template.update(sql, item.getUser().getUsername(), item.getTitle(), item.getCategory(),
                 item.getDescription(), item.getCreatedAt());
         return item;
     }
@@ -43,10 +43,10 @@ public class WantedItemsServiceImpl implements WantedItemsService {
     @Override
     public WantedItem update(Long id, WantedItem item) {
         String sql = """
-            UPDATE wanted_items SET title = ?, priority = ?, category = ?, description = ? 
+            UPDATE wanted_items SET title = ?, category = ?, description = ? 
             WHERE wanted_item_id = ?
         """;
-        template.update(sql, item.getTitle(), item.getPriority(), item.getCategory(), item.getDescription(), id);
+        template.update(sql, item.getTitle(), item.getCategory(), item.getDescription(), id);
         return getById(id);
     }
 

@@ -35,7 +35,7 @@ public class Swap {
     private User receiver;
 
     @ManyToOne
-    @JoinColumn(name = "offered_item", nullable = false, referencedColumnName = "offered_item_id")
+    @JoinColumn(name = "offered_item", nullable = true, referencedColumnName = "offered_item_id")
     private OfferedItem offeredItem;
     private int tokens;
 
