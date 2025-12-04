@@ -1,0 +1,114 @@
+.report-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  border-left: 4px solid #b8860b;
+}
+
+.report-header {
+  margin-bottom: 16px;
+}
+
+.report-users {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.report-user-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.report-label {
+  font-size: 12px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.report-username {
+  font-size: 16px;
+  font-weight: 600;
+  color: #4b2f00;
+}
+
+.report-arrow {
+  font-size: 20px;
+  color: #b8860b;
+  font-weight: 700;
+}
+
+.report-body {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #f8f7f2;
+  border-radius: 8px;
+}
+
+.report-reason {
+  margin-bottom: 12px;
+}
+
+.report-reason strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #4b2f00;
+  font-size: 14px;
+}
+
+.report-reason p {
+  margin: 0;
+  color: #333;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+.report-date {
+  font-size: 12px;
+  color: #666;
+}
+
+.report-date strong {
+  color: #4b2f00;
+}
+
+.report-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.btn-view-profile,
+.btn-mark-treated {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-view-profile {
+  background: #4b2f00;
+  color: #fff;
+}
+
+.btn-view-profile:hover {
+  background: #6b4f20;
+}
+
+.btn-mark-treated {
+  background: #34c759;
+  color: #fff;
+}
+
+.btn-mark-treated:hover {
+  background: #28a745;
+}
+

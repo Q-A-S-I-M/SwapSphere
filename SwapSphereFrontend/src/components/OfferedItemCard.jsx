@@ -34,7 +34,8 @@ const OfferedItemCard = ({
   const [pendingPriorityUpdate, setPendingPriorityUpdate] = useState(null);
 
   const { user } = useAuth();
-  const showRequestButton = source === "search" || !isOwnProfile;
+  const isAdmin = user?.role === "ADMIN";
+  const showRequestButton = !isAdmin && (source === "search" || !isOwnProfile);
 
   // Get item ID - handle both flat and nested structures
   const getItemId = () => {
@@ -259,7 +260,7 @@ const OfferedItemCard = ({
           <button className="btn-view" onClick={handleViewClick}>
             View
           </button>
-          {isOwnProfile && (
+          {(isOwnProfile || onDelete) && (
             <button className="btn-delete" onClick={() => onDelete?.(item)}>
               Delete
             </button>

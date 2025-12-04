@@ -1,11 +1,12 @@
 import React from "react";
 import "../styles/RatingCard.css";
 
-export default function RatingCard({ rating, currentUsername, onDelete }) {
+export default function RatingCard({ rating, currentUsername, onDelete, isAdmin = false }) {
   // Handle both string (legacy) and User object (from backend) formats
   const raterUsername = rating.rater?.username || rating.rater || "Unknown";
   const raterPic = rating.rater?.profilePicUrl || rating.raterPic || null;
   const isOwnReview = currentUsername && raterUsername === currentUsername;
+  const canDelete = isOwnReview || isAdmin;
   
   return (
     <div className="rating-card">
@@ -22,17 +23,17 @@ export default function RatingCard({ rating, currentUsername, onDelete }) {
         <div className="review">{rating.review || "—"}</div>
       </div>
       <div className="rating-date">{rating.createdAt ? new Date(rating.createdAt).toLocaleDateString() : ""}</div>
-      {isOwnReview && onDelete && (
+      {canDelete && onDelete && (
         <button 
           className="rating-delete-btn" 
           onClick={() => {
-            if (window.confirm("Are you sure you want to delete this review?")) {
+            if (window.confirm(isAdmin ? "Are you sure you want to delete this review? (Admin action)" : "Are you sure you want to delete this review?")) {
               onDelete(rating.ratingId);
             }
           }}
-          title="Delete your review"
+          title={isAdmin ? "Delete review (Admin)" : "Delete your review"}
         >
-          ×
+          Delete
         </button>
       )}
     </div>

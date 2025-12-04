@@ -16,6 +16,8 @@ export default function ProfilePage() {
   // Determine which username to display: URL param (viewing other user) or logged-in user (own profile)
   const targetUsername = urlUsername || authUser?.username;
   const isOwnProfile = !urlUsername || urlUsername === authUser?.username;
+  const isAdmin = authUser?.role === "ADMIN";
+  const isAdminViewingOther = isAdmin && !isOwnProfile;
   const [user, setUser] = useState(null);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
 
@@ -25,6 +27,10 @@ export default function ProfilePage() {
 
   const [addOfferedModal, setAddOfferedModal] = useState(false);
   const [addWantedModal, setAddWantedModal] = useState(false);
+  
+  // Admin controls
+  const [warnModalOpen, setWarnModalOpen] = useState(false);
+  const [warnReason, setWarnReason] = useState("");
 
   // Profile form
   const [profileForm, setProfileForm] = useState({
@@ -416,7 +422,7 @@ export default function ProfilePage() {
         ...wantedForm, 
         user: { username: user.username }
       };
-      const res = await axios.post("/wanted-items", payload);
+      await axios.post("/wanted-items", payload);
       
       // Refresh items
       const refreshedRes = await axios.get(`/wanted-items/user-item/${targetUsername}`);
@@ -500,6 +506,30 @@ export default function ProfilePage() {
             <button className="btn-edit-profile" onClick={handleOpenProfileModal}>Edit Profile</button>
           </div>
         )}
+        {isAdminViewingOther && (
+          <div className="profile-action-col">
+            <button className="btn-warn-user" onClick={() => setWarnModalOpen(true)}>Warn</button>
+            <button className="btn-block-user" onClick={async () => {
+              if (!window.confirm(`Are you sure you want to block user "${targetUsername}"? This will restrict their access to the website.`)) {
+                return;
+              }
+              try {
+                // TODO: Implement backend endpoint for blocking users
+                // await axios.post(`/admin/block/${targetUsername}`);
+                alert(`User ${targetUsername} has been blocked. (Backend implementation pending)`);
+              } catch (err) {
+                console.error("Error blocking user:", err);
+                alert("Failed to block user: " + (err.response?.data || err.message));
+              }
+            }}>Block</button>
+          </div>
+        )}
+        {isAdminViewingOther && (
+          <div className="profile-action-col">
+            <button className="btn-warn-user" onClick={() => setWarnModalOpen(true)}>Warn User</button>
+            <button className="btn-block-user" onClick={() => alert("Block functionality not implemented yet")}>Block User</button>
+          </div>
+        )}
       </div>
 
       {/* Tabs */}
@@ -520,7 +550,18 @@ export default function ProfilePage() {
                 <div className="empty-note">No offered items yet. Click "+ Add Offered Item" to add one.</div>
               ) : (
                 offeredItems.map(it => (
-                  <OfferedItemCard key={it.offeredItemId} item={it} isOwnProfile={isOwnProfile} onDelete={isOwnProfile ? () => deleteOffered(it.offeredItemId) : undefined} />
+                  <OfferedItemCard 
+                    key={it.offeredItemId} 
+                    item={it} 
+                    isOwnProfile={isOwnProfile} 
+                    onRequest={isAdminViewingOther ? undefined : undefined}
+                    onDelete={(isOwnProfile || isAdminViewingOther) ? async () => {
+                      if (!window.confirm(`Are you sure you want to delete "${it.title || it.name}"?`)) {
+                        return;
+                      }
+                      await deleteOffered(it.offeredItemId);
+                    } : undefined} 
+                  />
                 ))
               )}
             </div>
@@ -531,7 +572,18 @@ export default function ProfilePage() {
                 <div className="empty-note">No wanted items yet. Click "+ Add Wanted Item" to add one.</div>
               ) : (
                 wantedItems.map(it => (
-                  <WantedItemCard key={it.wantedItemId} item={it} isOwn={isOwnProfile} onDelete={isOwnProfile ? () => deleteWanted(it.wantedItemId) : undefined} />
+                  <WantedItemCard 
+                    key={it.wantedItemId} 
+                    item={it} 
+                    isOwn={isOwnProfile} 
+                    isAdmin={isAdminViewingOther}
+                    onDelete={(isOwnProfile || isAdminViewingOther) ? async () => {
+                      if (!window.confirm(`Are you sure you want to delete "${it.title || it.name}"?`)) {
+                        return;
+                      }
+                      await deleteWanted(it.wantedItemId);
+                    } : undefined} 
+                  />
                 ))
               )}
             </div>
@@ -546,7 +598,8 @@ export default function ProfilePage() {
                     key={r.ratingId} 
                     rating={r} 
                     currentUsername={authUser?.username}
-                    onDelete={async (ratingId) => {
+                    isAdmin={isAdminViewingOther}
+                    onDelete={(isOwnProfile || isAdminViewingOther) ? async (ratingId) => {
                       if (!authUser?.username) {
                         alert("You must be logged in to delete reviews");
                         return;
@@ -583,7 +636,7 @@ export default function ProfilePage() {
                         const errorMsg = err.response?.data || err.message || "Failed to delete review";
                         alert("Failed to delete review: " + errorMsg);
                       }
-                    }}
+                    } : undefined}
                   />
                 ))
               )}
@@ -591,6 +644,82 @@ export default function ProfilePage() {
           );
         }}
       />
+
+      {/* Warn Modal */}
+      {warnModalOpen && (
+        <Modal onClose={() => {
+          setWarnModalOpen(false);
+          setWarnReason("");
+        }} title="Warn User">
+          <div>
+            <label>Warning Reason *</label>
+            <textarea
+              value={warnReason}
+              onChange={(e) => setWarnReason(e.target.value)}
+              placeholder="Enter the reason for warning this user..."
+              rows={5}
+              style={{
+                width: '100%',
+                padding: '12px',
+                marginTop: '8px',
+                border: '2px solid #ddd',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontFamily: 'inherit',
+                resize: 'vertical',
+                boxSizing: 'border-box'
+              }}
+            />
+            <div style={{ display: 'flex', gap: '10px', marginTop: '16px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => {
+                  setWarnModalOpen(false);
+                  setWarnReason("");
+                }}
+                style={{
+                  padding: '10px 20px',
+                  background: '#777',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!warnReason.trim()) {
+                    alert("Please enter a warning reason");
+                    return;
+                  }
+                  try {
+                    // TODO: Implement backend endpoint for warning users
+                    // await axios.post(`/admin/warn/${targetUsername}`, { reason: warnReason });
+                    alert(`Warning sent to ${targetUsername}: ${warnReason}`);
+                    setWarnModalOpen(false);
+                    setWarnReason("");
+                  } catch (err) {
+                    console.error("Error sending warning:", err);
+                    alert("Failed to send warning: " + (err.response?.data || err.message));
+                  }
+                }}
+                style={{
+                  padding: '10px 20px',
+                  background: '#b8860b',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: '600'
+                }}
+              >
+                Send Warning
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* Profile Modal */}
       {profileModalOpen && (

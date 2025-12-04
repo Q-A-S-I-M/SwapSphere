@@ -77,7 +77,7 @@ export function AuthProvider({ children }) {
     }
   }, [user]);
 
-  const login = ({ username, email }) => {
+  const login = ({ username, email, role }) => {
     const u = {
       username: username || "User",
       name: username || "User",
@@ -86,7 +86,8 @@ export function AuthProvider({ children }) {
       rating: "4.8",
       profilePic: null,
       tokens: 500,
-      myItems: []
+      myItems: [],
+      role: role || "USER"
     };
     setUser(u);
     return u;

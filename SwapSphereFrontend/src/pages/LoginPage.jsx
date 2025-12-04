@@ -25,8 +25,6 @@ export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-  // ROLE TOGGLE
-  const [role, setRole] = useState("user");
 
   // LOCATION
   const [locationAllowed, setLocationAllowed] = useState(null);
@@ -39,6 +37,8 @@ export default function LoginPage() {
   // --- GET GEOLOCATION ---
   useEffect(() => {
     if (!navigator.geolocation) {
+      // Initialize location permission state
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLocationAllowed(false);
       return;
     }
@@ -91,16 +91,20 @@ export default function LoginPage() {
     }
 
     try {
-      const roleValue = role === "admin" ? "ADMIN" : "USER";
-
       const response = await api.post("/auth/login", {
         username: logUser,
         password: logPass,
-        role: roleValue, // send role explicitly
       });
 
-      login({ username: logUser, role: response.data.role });
-      navigate("/dashboard");
+      const userRole = response.data.role || "USER";
+      login({ username: logUser, role: userRole });
+
+      // Redirect based on role
+      if (userRole === "ADMIN") {
+        navigate("/admin/dashboard");
+      } else {
+        navigate("/dashboard");
+      }
 
     } catch (err) {
       console.error(err);
@@ -167,13 +171,6 @@ export default function LoginPage() {
     }
   };
 
-  // --- ROLE TOGGLE ---
-  const changeRole = (selected) => {
-    setRole(selected);
-    resetAllFields();
-    setErrorMessage("");
-    setSuccessMessage("");
-  };
 
   return (
     <div className="center-page">
@@ -188,11 +185,6 @@ export default function LoginPage() {
 
             {mode === "login" && (
               <form onSubmit={handleLogin} className="login-form">
-                <div className="role-toggle">
-                  <button type="button" className={role === "user" ? "active" : ""} onClick={() => changeRole("user")}>User</button>
-                  <button type="button" className={role === "admin" ? "active" : ""} onClick={() => changeRole("admin")}>Admin</button>
-                </div>
-
                 <input type="text" placeholder="Username" className="input-field" value={logUser} onChange={(e) => setLogUser(e.target.value)} />
                 <input type="password" placeholder="Password" className="input-field" value={logPass} onChange={(e) => setLogPass(e.target.value)} />
 

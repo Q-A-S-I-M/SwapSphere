@@ -36,13 +36,13 @@
   position: absolute;
   right: 12px;
   bottom: 12px;
-  width: 28px;
+  min-width: 60px;
   height: 28px;
   background: #dc3545;
   color: #fff;
   border: none;
-  border-radius: 50%;
-  font-size: 20px;
+  border-radius: 14px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
   display: flex;
@@ -50,10 +50,10 @@
   justify-content: center;
   transition: all 0.2s ease;
   line-height: 1;
-  padding: 0;
+  padding: 0 10px;
 }
 
 .rating-delete-btn:hover {
   background: #c82333;
-  transform: scale(1.1);
+  transform: scale(1.05);
 }

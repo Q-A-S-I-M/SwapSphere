@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import Modal from "./Modal"; // Reusable modal component
 import "../styles/WantedItemCard.css";
 
-export default function WantedItemCard({ item, isOwn=false, onDelete }) {
+export default function WantedItemCard({ item, isOwn=false, onDelete, isAdmin=false }) {
   const [modalOpen, setModalOpen] = useState(false);
 
   return (
@@ -14,7 +14,7 @@ export default function WantedItemCard({ item, isOwn=false, onDelete }) {
           </div>
           <div className="wanted-right">
             <button className="btn-view" onClick={() => setModalOpen(true)}>View</button>
-            {isOwn && <button className="btn-delete" onClick={onDelete}>Delete</button>}
+            {(isOwn || isAdmin) && onDelete && <button className="btn-delete" onClick={onDelete}>Delete</button>}
           </div>
         </div>
       </div>

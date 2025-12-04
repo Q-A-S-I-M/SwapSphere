@@ -7,8 +7,11 @@ import SearchPage from "../pages/SearchPage";
 import NotificationPage from "../pages/NotificationPage";
 import RequestsPage from "../pages/RequestsPage";
 import AppLayout from "../layout/AppLayout";
+import AdminLayout from "../layout/AdminLayout";
 import { useAuth } from "../context/AuthContext";
 import UserWalletPage from "../pages/UserWalletPage";
+import AdminDashboardPage from "../pages/AdminDashboardPage";
+import AdminReportsPage from "../pages/AdminReportsPage";
 
 export default function AppRouter() {
   const { user } = useAuth();
@@ -90,6 +93,40 @@ export default function AppRouter() {
             <AppLayout>
               <NotificationPage username={user?.username} />
             </AppLayout>
+          }
+        />
+
+        {/* Admin Routes */}
+        <Route
+          path="/admin/dashboard"
+          element={
+            <AdminLayout>
+              <AdminDashboardPage />
+            </AdminLayout>
+          }
+        />
+        <Route
+          path="/admin/search"
+          element={
+            <AdminLayout>
+              <SearchPage />
+            </AdminLayout>
+          }
+        />
+        <Route
+          path="/admin/reports"
+          element={
+            <AdminLayout>
+              <AdminReportsPage />
+            </AdminLayout>
+          }
+        />
+        <Route
+          path="/admin/profile/:username"
+          element={
+            <AdminLayout>
+              <ProfilePage />
+            </AdminLayout>
           }
         />
 

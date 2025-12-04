@@ -32,13 +32,19 @@ export default function SearchPage() {
   const [profileRatings, setProfileRatings] = useState([]);
   const [loadingProfile, setLoadingProfile] = useState(false);
   
-  // Report and Rating modals
+  // Report, Warn, and Rating modals
   const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [warnModalOpen, setWarnModalOpen] = useState(false);
   const [ratingModalOpen, setRatingModalOpen] = useState(false);
   const [reportForm, setReportForm] = useState({ reason: "" });
+  const [warnForm, setWarnForm] = useState({ reason: "" });
   const [ratingForm, setRatingForm] = useState({ score: 5, review: "" });
   const [submittingReport, setSubmittingReport] = useState(false);
+  const [submittingWarn, setSubmittingWarn] = useState(false);
   const [submittingRating, setSubmittingRating] = useState(false);
+  
+  const isAdmin = authUser?.role === "ADMIN";
+  const isAdminViewingProfile = isAdmin && viewingUser && authUser?.username !== viewingUser?.username;
 
   // Fetch profile data when viewing a user
   useEffect(() => {
@@ -310,9 +316,26 @@ export default function SearchPage() {
               </div>
               {authUser && authUser.username !== profileUser.username && (
                 <div className="profile-action-col">
-                  <button className="btn-report-user" onClick={() => setReportModalOpen(true)}>
-                    Report User
-                  </button>
+                  {isAdminViewingProfile ? (
+                    <>
+                      <button className="btn-warn-user" onClick={() => setWarnModalOpen(true)}>
+                        Warn
+                      </button>
+                      <button className="btn-block-user" onClick={() => {
+                        if (!window.confirm(`Are you sure you want to block user "${profileUser.username}"? This will restrict their access to the website.`)) {
+                          return;
+                        }
+                        // TODO: Implement backend endpoint for blocking users
+                        alert(`User ${profileUser.username} has been blocked. (Backend implementation pending)`);
+                      }}>
+                        Block
+                      </button>
+                    </>
+                  ) : (
+                    <button className="btn-report-user" onClick={() => setReportModalOpen(true)}>
+                      Report User
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -335,7 +358,33 @@ export default function SearchPage() {
                           item={it} 
                           isOwnProfile={false} 
                           source="search"
-                          onRequest={setRequestTarget}
+                          onRequest={isAdminViewingProfile ? undefined : setRequestTarget}
+                          onDelete={isAdminViewingProfile ? async (itemToDelete) => {
+                            if (!window.confirm(`Are you sure you want to delete "${itemToDelete.title || itemToDelete.name}"?`)) {
+                              return;
+                            }
+                            try {
+                              const itemId = itemToDelete.offeredItemId || itemToDelete.id;
+                              await axios.delete(`/offer-items/${itemId}`);
+                              alert("Item deleted successfully");
+                              // Refresh profile data
+                              const offeredRes = await axios.get(`/offer-items/user-item/${profileUser.username}`);
+                              const offeredItemsRaw = offeredRes.data || [];
+                              const transformedOfferedItems = offeredItemsRaw.map(item => {
+                                if (item.offeredItem) {
+                                  return {
+                                    ...item.offeredItem,
+                                    images: item.images || []
+                                  };
+                                }
+                                return item;
+                              });
+                              setProfileOfferedItems(transformedOfferedItems);
+                            } catch (err) {
+                              console.error("Error deleting item:", err);
+                              alert("Failed to delete item: " + (err.response?.data || err.message));
+                            }
+                          } : undefined}
                         />
                       ))
                     )}
@@ -350,7 +399,23 @@ export default function SearchPage() {
                         <WantedItemCard 
                           key={it.wantedItemId} 
                           item={it} 
-                          isOwn={false} 
+                          isOwn={false}
+                          isAdmin={isAdminViewingProfile}
+                          onDelete={isAdminViewingProfile ? async () => {
+                            if (!window.confirm(`Are you sure you want to delete "${it.title || it.name}"?`)) {
+                              return;
+                            }
+                            try {
+                              await axios.delete(`/wanted-items/${it.wantedItemId}`);
+                              alert("Item deleted successfully");
+                              // Refresh profile data
+                              const wantedRes = await axios.get(`/wanted-items/user-item/${profileUser.username}`);
+                              setProfileWantedItems(wantedRes.data || []);
+                            } catch (err) {
+                              console.error("Error deleting item:", err);
+                              alert("Failed to delete item: " + (err.response?.data || err.message));
+                            }
+                          } : undefined}
                         />
                       ))
                     )}
@@ -358,7 +423,7 @@ export default function SearchPage() {
                 );
                 if (activeTab === "ratings") return (
                   <div className="items-list">
-                    {authUser && authUser.username !== profileUser.username && (
+                    {authUser && authUser.username !== profileUser.username && !isAdminViewingProfile && (
                       <div style={{ marginBottom: '20px' }}>
                         <button className="btn-add-item" onClick={() => setRatingModalOpen(true)}>
                           + Give a Review
@@ -373,6 +438,7 @@ export default function SearchPage() {
                           key={r.ratingId} 
                           rating={r} 
                           currentUsername={authUser?.username}
+                          isAdmin={isAdminViewingProfile}
                           onDelete={async (ratingId) => {
                             if (!authUser?.username) {
                               alert("You must be logged in to delete reviews");
@@ -491,8 +557,8 @@ export default function SearchPage() {
           }}
         />
 
-        {/* Report Modal */}
-        {reportModalOpen && (
+        {/* Report Modal (for non-admin users) */}
+        {reportModalOpen && !isAdminViewingProfile && (
           <Modal onClose={() => {
             setReportModalOpen(false);
             setReportForm({ reason: "" });
@@ -552,6 +618,93 @@ export default function SearchPage() {
             >
               {submittingReport ? "Submitting..." : "Submit Report"}
             </button>
+          </Modal>
+        )}
+
+        {/* Warn Modal (for admin) */}
+        {warnModalOpen && isAdminViewingProfile && (
+          <Modal onClose={() => {
+            setWarnModalOpen(false);
+            setWarnForm({ reason: "" });
+          }} title="Warn User">
+            <div style={{ marginBottom: '16px' }}>
+              <label>Warning Reason</label>
+              <textarea
+                name="reason"
+                placeholder="Please provide a reason for warning this user..."
+                value={warnForm.reason}
+                onChange={(e) => setWarnForm({ reason: e.target.value })}
+                rows={5}
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  color: '#ffffff',
+                  border: '2px solid rgba(255, 255, 255, 0.3)',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontFamily: 'inherit',
+                  resize: 'vertical',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => {
+                  setWarnModalOpen(false);
+                  setWarnForm({ reason: "" });
+                }}
+                style={{
+                  padding: '10px 20px',
+                  background: '#777',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!warnForm.reason.trim()) {
+                    alert("Please provide a warning reason");
+                    return;
+                  }
+                  if (!authUser?.username || !profileUser?.username) {
+                    alert("User information not available");
+                    return;
+                  }
+
+                  setSubmittingWarn(true);
+                  try {
+                    // TODO: Implement backend endpoint for warning users
+                    // await axios.post(`/admin/warn/${profileUser.username}`, { reason: warnForm.reason.trim() });
+                    alert(`Warning sent to ${profileUser.username}: ${warnForm.reason.trim()}`);
+                    setWarnModalOpen(false);
+                    setWarnForm({ reason: "" });
+                  } catch (err) {
+                    console.error("Error sending warning:", err);
+                    alert("Failed to send warning: " + (err.response?.data || err.message));
+                  } finally {
+                    setSubmittingWarn(false);
+                  }
+                }}
+                disabled={submittingWarn}
+                style={{
+                  padding: '10px 20px',
+                  background: '#ff9800',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: '600'
+                }}
+              >
+                {submittingWarn ? "Sending..." : "Send Warning"}
+              </button>
+            </div>
           </Modal>
         )}
 
@@ -740,11 +893,26 @@ export default function SearchPage() {
           <div className="items-results-list">
             {itemResults.map((item) => (
               <div key={item.offeredItemId} className="search-result-card">
-              <OfferedItemCard
-                item={item}
+            <OfferedItemCard
+              item={item}
                 source="search"
-                isOwnProfile={false}
-                onRequest={setRequestTarget}
+              isOwnProfile={false}
+                onRequest={authUser?.role === "ADMIN" ? undefined : setRequestTarget}
+                onDelete={authUser?.role === "ADMIN" ? async (itemToDelete) => {
+                  if (!window.confirm(`Are you sure you want to delete "${itemToDelete.title || itemToDelete.name}"?`)) {
+                    return;
+                  }
+                  try {
+                    const itemId = itemToDelete.offeredItemId || itemToDelete.id;
+                    await axios.delete(`/offer-items/${itemId}`);
+                    alert("Item deleted successfully");
+                    // Refresh search results
+                    performSearch();
+                  } catch (err) {
+                    console.error("Error deleting item:", err);
+                    alert("Failed to delete item: " + (err.response?.data || err.message));
+                  }
+                } : undefined}
               />
             </div>
             ))}
