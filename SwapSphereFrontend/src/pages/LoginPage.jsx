@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import api from "../api/axios"; // your axios instance
 import "../styles/LoginPage.css";
 import { useAuth } from "../context/AuthContext";
+import chatApi from "../api/chatApi";
 
 export default function LoginPage() {
   const [mode, setMode] = useState("login"); // login | register
@@ -100,6 +101,12 @@ export default function LoginPage() {
       });
 
       login({ username: logUser, role: response.data.role });
+      try{
+        const { default: chatApi } = await import("../api/chatApi");
+        await chatApi.post("/api/auth/login", { username: logUser, password: logPass });
+      } catch (chatErr) {
+        console.error("Chat server login failed:", chatErr);
+      }
       navigate("/dashboard");
 
     } catch (err) {

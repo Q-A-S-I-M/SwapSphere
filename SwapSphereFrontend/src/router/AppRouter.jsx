@@ -9,6 +9,7 @@ import RequestsPage from "../pages/RequestsPage";
 import AppLayout from "../layout/AppLayout";
 import { useAuth } from "../context/AuthContext";
 import UserWalletPage from "../pages/UserWalletPage";
+import ChatPage from "../pages/ChatPage";
 
 export default function AppRouter() {
   const { user } = useAuth();
@@ -78,7 +79,7 @@ export default function AppRouter() {
           path="/chat"
           element={
             <AppLayout>
-              <div style={{ padding: 24, background: "#fff" }}>Chat (placeholder)</div>
+              <ChatPage />
             </AppLayout>
           }
         />
