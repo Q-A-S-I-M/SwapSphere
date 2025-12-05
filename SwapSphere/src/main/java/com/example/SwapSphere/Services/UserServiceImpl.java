@@ -35,8 +35,12 @@ public class UserServiceImpl implements UserService{
     }
     @Override
     public User getUserById(String username) {
+        System.out.println("Fetching user with username: " + username);
         String sql = "SELECT * FROM Users WHERE username = ?";
-        return template.queryForObject(sql, new UserRowMapper(), username);
+        User user = template.queryForObject(sql, new UserRowMapper(), username);
+        System.out.println("user fetched: " + user);
+        return user;
+        //return template.queryForObject(sql, new UserRowMapper(), username);
     }
 
     @Override

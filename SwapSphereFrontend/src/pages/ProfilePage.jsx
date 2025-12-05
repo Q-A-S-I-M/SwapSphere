@@ -524,12 +524,6 @@ export default function ProfilePage() {
             }}>Block</button>
           </div>
         )}
-        {isAdminViewingOther && (
-          <div className="profile-action-col">
-            <button className="btn-warn-user" onClick={() => setWarnModalOpen(true)}>Warn User</button>
-            <button className="btn-block-user" onClick={() => alert("Block functionality not implemented yet")}>Block User</button>
-          </div>
-        )}
       </div>
 
       {/* Tabs */}
