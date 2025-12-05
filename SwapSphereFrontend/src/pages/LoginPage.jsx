@@ -1,5 +1,5 @@
 // src/pages/LoginPage.jsx
-import React, { useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios"; // your axios instance
 import "../styles/LoginPage.css";
@@ -246,6 +246,13 @@ export default function LoginPage() {
 
       setSuccessMessage("Registration successful! Please log in.");
       switchTo("login");
+      await chatApi.post("/api/auth/signup", { 
+        name: fullName,
+        password: regPass,
+        username: regUser,
+        dateOfBirth: "2000-01-01",
+        email: email,
+      });
 
     } catch (err) {
       console.error(err);

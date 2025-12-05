@@ -125,6 +125,10 @@ export default function ChatPage() {
         case 'message_deleted':
           setMessages(prev => prev.filter(msg => msg.id !== data.id))
           break
+        case 'user_registered':
+          // Optionally handle user registration confirmation
+          console.log(`User registered: ${data.username}`)
+          break
         default:
           break
       }

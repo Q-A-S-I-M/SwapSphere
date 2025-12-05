@@ -20,9 +20,10 @@ export default function UserList({ currentUser, selectedUser, onSelectUser, onOn
 
   useEffect(() => {
     let mounted = true
+    console.log('Fetching :'+ currentUser.username)
     const fetchUsers = async () => {
       try {
-        const res = await chatApi.get('/api/auth/users')
+        const res = await chatApi.get(`/api/auth/users/${currentUser.username}`)
         const data = res.data
         // Chat server may return response as string, need to parse if necessary
         const parsedData = typeof data === 'string' ? JSON.parse(data) : data

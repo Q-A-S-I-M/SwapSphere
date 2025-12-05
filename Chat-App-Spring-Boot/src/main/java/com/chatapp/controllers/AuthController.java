@@ -7,6 +7,9 @@ import com.google.gson.JsonObject;
 import com.chatapp.models.Account;
 import com.chatapp.services.AuthService;
 import com.chatapp.repositories.AccountRepository;
+import com.chatapp.repositories.MessageRepository;
+
+import java.util.ArrayList;
 import java.util.List;
 import com.google.gson.JsonArray;
 
@@ -20,6 +23,8 @@ public class AuthController {
 
     @Autowired
     private AccountRepository accountRepository;
+    @Autowired
+    private MessageRepository messageRepository;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
@@ -112,6 +117,50 @@ public class AuthController {
             error.addProperty("message", e.getMessage());
             return ResponseEntity.status(500).body(error.toString());
         }
+    }
+
+    @GetMapping("/users/{currentUsersname}")
+    public ResponseEntity<?> getUsers(@PathVariable String currentUsersname) {
+        try {
+            List<String> usernamesWithChatHistory = messageRepository.findDistinctUsersWithChatHistory(currentUsersname);
+            System.out.println("usernamesWithChatHistory: " + usernamesWithChatHistory);
+            if (usernamesWithChatHistory == null || usernamesWithChatHistory.isEmpty()) {
+                JsonObject emptyResp = new JsonObject();
+                emptyResp.addProperty("success", true);
+                emptyResp.add("users", new JsonArray());
+                return ResponseEntity.ok(emptyResp.toString());
+            }
+            List<Account> accounts  = getAccountsByUsernames(usernamesWithChatHistory);
+            JsonObject response = new JsonObject();
+            response.addProperty("success", true);
+            JsonArray usersArray = new JsonArray();
+            for (Account acc : accounts) {
+                if (!acc.getUsername().equals(currentUsersname)) {
+                    JsonObject u = new JsonObject();
+                    u.addProperty("username", acc.getUsername());
+                    u.addProperty("name", acc.getName());
+                    u.addProperty("email", acc.getEmail());
+                    usersArray.add(u);
+                }
+            }
+            response.add("users", usersArray);
+            return ResponseEntity.ok(response.toString());
+        } catch (Exception e) {
+            JsonObject error = new JsonObject();
+            error.addProperty("success", false);
+            error.addProperty("message", e.getMessage());
+            return ResponseEntity.status(500).body(error.toString());
+        }
+    }
+    public List<Account> getAccountsByUsernames(List<String> usernames) {
+        List<Account> accounts = new ArrayList<>();
+        for (String username : usernames) {
+            Account acc = accountRepository.findByUsername(username);
+            if (acc != null) {
+                accounts.add(acc);
+            }
+        }
+        return accounts;
     }
 
     static class LoginRequest {
