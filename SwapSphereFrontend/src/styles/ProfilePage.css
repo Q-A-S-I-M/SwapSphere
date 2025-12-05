@@ -172,6 +172,23 @@ textarea.profile-input-edit {
 .btn-edit-profile:hover {
   background: #ffed4e;
 }
+.btn-chat-user {
+  padding: 10px 20px;
+  background: var(--gold);
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-right: 10px;
+}
+.btn-chat-user:hover {
+  background: #e5c84a;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
+}
 .btn-report-user {
   padding: 10px 20px;
   background: #dc3545;

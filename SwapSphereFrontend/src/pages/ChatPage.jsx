@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import '../styles/ChatPage.css'
 import ChatWindow from '../components/ChatWindow'
 import UserList from '../components/UserList'
@@ -8,6 +9,7 @@ import chatApi from '../api/chatApi'
 export default function ChatPage() {
   const { user, logout } = useAuth()
   const currentUser = user
+  const [searchParams, setSearchParams] = useSearchParams()
   const [selectedUser, setSelectedUser] = useState(null)
   const [onlineUsers, setOnlineUsers] = useState(new Set())
   const [messages, setMessages] = useState([])
@@ -141,6 +143,32 @@ export default function ChatPage() {
   }, [currentUser])
 
   useEffect(() => { selectedUserRef.current = selectedUser }, [selectedUser])
+
+  // Auto-select user from URL params
+  useEffect(() => {
+    const usernameParam = searchParams.get('user')
+    if (usernameParam && currentUser && currentUser.username !== usernameParam) {
+      // Only auto-select if no user is currently selected, or if the selected user is different
+      if (!selectedUser || selectedUser.username !== usernameParam) {
+        // Fetch user data and select them
+        chatApi.get('/api/auth/users')
+          .then(res => {
+            const data = typeof res.data === 'string' ? JSON.parse(res.data) : res.data
+            const users = data?.users || (Array.isArray(data) ? data : [])
+            const targetUser = users.find(u => u.username === usernameParam)
+            if (targetUser) {
+              handleSelectUser(targetUser)
+              // Clear URL param after selecting
+              setSearchParams({})
+            } else {
+              console.warn(`User ${usernameParam} not found in user list`)
+            }
+          })
+          .catch(err => console.error('Failed to fetch users for auto-select:', err))
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, currentUser, selectedUser])
 
   const handleSelectUser = async (user) => {
     setSelectedUser(user)

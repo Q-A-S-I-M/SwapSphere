@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import "../styles/ProfilePage.css";
 import ItemTabs from "../components/ItemTabs";
 import OfferedItemCard from "../components/OfferedItemCard";
@@ -94,6 +94,7 @@ const InteractiveStarRating = ({ score, onScoreChange }) => {
 export default function ProfilePage() {
   const { username: urlUsername } = useParams();
   const { user: authUser, updateUser } = useAuth();
+  const navigate = useNavigate();
   
   // Determine which username to display: URL param (viewing other user) or logged-in user (own profile)
   const targetUsername = urlUsername || authUser?.username;
@@ -619,6 +620,11 @@ export default function ProfilePage() {
     setWantedItems(prev => prev.filter(it => it.wantedItemId !== id));
   };
 
+  const handleChatWithUser = (username) => {
+    if (!username || !authUser || username === authUser.username) return;
+    navigate(`/chat?user=${username}`);
+  };
+
   if (!user) {
     return (
       <div className="profile-page-root">
@@ -672,6 +678,19 @@ export default function ProfilePage() {
                 alert("Failed to block user: " + (err.response?.data || err.message));
               }
             }}>Block</button>
+          </div>
+        )}
+        {!isOwnProfile && !isAdminViewingOther && authUser && (
+          <div className="profile-action-col">
+            <button className="btn-chat-user" onClick={() => handleChatWithUser(targetUsername)}>
+              Chat
+            </button>
+            <button className="btn-report-user" onClick={() => {
+              // TODO: Add report modal functionality if needed
+              alert("Report functionality to be implemented");
+            }}>
+              Report User
+            </button>
           </div>
         )}
       </div>
