@@ -1,8 +1,14 @@
 .chat-page {
   display: flex;
-  height: 100vh;
+  height: calc(100vh - 30px - 30px);
+  min-height: 0;
   background: var(--bg);
   color: var(--text);
+  overflow: hidden;
+  margin: -28px;
+  padding: 0;
+  width: calc(100% + 56px);
+  position: relative;
 }
 
 .no-chat-selected {

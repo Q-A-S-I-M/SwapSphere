@@ -88,20 +88,55 @@
   margin-bottom: 20px;
 }
 
-.chart-placeholder {
+.chart-container {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 16px;
+}
+
+.chart-bar-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.chart-bar-label {
+  min-width: 120px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  text-align: right;
+}
+
+.chart-bar-track {
+  flex: 1;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
 }
 
 .chart-bar {
-  background: #b8860b;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: #fff;
-  padding: 12px 16px;
-  border-radius: 8px;
   font-weight: 600;
-  text-align: center;
+  font-size: 14px;
+  border-radius: 8px;
   transition: width 0.3s ease;
+  min-width: fit-content;
+  padding: 0 12px;
+}
+
+.chart-bar-completed {
+  background: #4caf50;
+}
+
+.chart-bar-progress {
+  background: #b8860b;
 }
 
 .activity-list {
@@ -125,5 +160,25 @@
   font-weight: 700;
   color: #b8860b;
   font-size: 18px;
+}
+
+.chart-empty {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+  font-size: 14px;
+}
+
+/* Recharts styling overrides */
+.recharts-wrapper {
+  margin: 0 auto;
+}
+
+.recharts-legend-wrapper {
+  padding-top: 20px;
+}
+
+.recharts-tooltip-wrapper {
+  z-index: 1000;
 }
 

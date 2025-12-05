@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import "../styles/SearchPage.css";
 import "../styles/ProfilePage.css";
 import OfferedItemCard from "../components/OfferedItemCard";
@@ -84,6 +85,7 @@ const InteractiveStarRating = ({ score, onScoreChange }) => {
 
 export default function SearchPage() {
   const { user: authUser } = useAuth();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [searchType, setSearchType] = useState("items"); // "users" or "items"
   const [userResults, setUserResults] = useState([]);
@@ -403,9 +405,14 @@ export default function SearchPage() {
                       </button>
                     </>
                   ) : (
-                    <button className="btn-report-user" onClick={() => setReportModalOpen(true)}>
-                      Report User
-                    </button>
+                    <>
+                      <button className="btn-chat-user" onClick={() => handleChatWithUser(profileUser.username)}>
+                        Chat
+                      </button>
+                      <button className="btn-report-user" onClick={() => setReportModalOpen(true)}>
+                        Report User
+                      </button>
+                    </>
                   )}
                 </div>
               )}

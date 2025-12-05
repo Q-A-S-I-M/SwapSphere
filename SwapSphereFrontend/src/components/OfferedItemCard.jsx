@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import Modal from "./Modal";
 import SuccessModal from "./SuccessModal";
 import "../styles/OfferedItemCard.css";
@@ -34,8 +35,10 @@ const OfferedItemCard = ({
   const [pendingPriorityUpdate, setPendingPriorityUpdate] = useState(null);
 
   const { user } = useAuth();
+  const navigate = useNavigate();
   const isAdmin = user?.role === "ADMIN";
   const showRequestButton = !isAdmin && (source === "search" || !isOwnProfile);
+  const showChatButton = source === "search" && !isOwnProfile && !isAdmin;
 
   // Get item ID - handle both flat and nested structures
   const getItemId = () => {
@@ -106,6 +109,11 @@ const OfferedItemCard = ({
   const itemOwnerUsername = displayItem.user?.username || displayItem.username;
   const isItemOwner = user && itemOwnerUsername && itemOwnerUsername === user.username;
   const canIncreasePriority = isOwnProfile && isItemOwner;
+
+  const handleChatWithOwner = () => {
+    if (!itemOwnerUsername || !user || itemOwnerUsername === user.username) return;
+    navigate(`/chat?user=${itemOwnerUsername}`);
+  };
 
   const handleViewClick = () => {
     setModalOpen(true);
@@ -369,6 +377,14 @@ const OfferedItemCard = ({
                     </div>
                   )}
 
+                  {showChatButton && (
+                    <button
+                      className="chat-btn"
+                      onClick={handleChatWithOwner}
+                    >
+                      Chat
+                    </button>
+                  )}
                   {showRequestButton && (
                     <button
                       className="request-btn"

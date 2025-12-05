@@ -1,9 +1,10 @@
 .report-card {
-  background: #fff;
+  background: #2a2a2a;
   border-radius: 14px;
   padding: 20px;
   margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  border: 1px solid #444;
   border-left: 4px solid #b8860b;
 }
 
@@ -26,7 +27,7 @@
 
 .report-label {
   font-size: 12px;
-  color: #666;
+  color: #999;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -34,7 +35,7 @@
 .report-username {
   font-size: 16px;
   font-weight: 600;
-  color: #4b2f00;
+  color: #ffffff;
 }
 
 .report-arrow {
@@ -46,8 +47,9 @@
 .report-body {
   margin-bottom: 16px;
   padding: 12px;
-  background: #f8f7f2;
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .report-reason {
@@ -57,24 +59,24 @@
 .report-reason strong {
   display: block;
   margin-bottom: 6px;
-  color: #4b2f00;
+  color: #ffffff;
   font-size: 14px;
 }
 
 .report-reason p {
   margin: 0;
-  color: #333;
+  color: #cccccc;
   line-height: 1.5;
   font-size: 14px;
 }
 
 .report-date {
   font-size: 12px;
-  color: #666;
+  color: #999;
 }
 
 .report-date strong {
-  color: #4b2f00;
+  color: #ffffff;
 }
 
 .report-actions {
@@ -95,12 +97,12 @@
 }
 
 .btn-view-profile {
-  background: #4b2f00;
+  background: #444;
   color: #fff;
 }
 
 .btn-view-profile:hover {
-  background: #6b4f20;
+  background: #555;
 }
 
 .btn-mark-treated {

@@ -115,6 +115,14 @@ export default function AppRouter() {
           }
         />
         <Route
+          path="/admin/chat"
+          element={
+            <AdminLayout>
+              <ChatPage />
+            </AdminLayout>
+          }
+        />
+        <Route
           path="/admin/reports"
           element={
             <AdminLayout>

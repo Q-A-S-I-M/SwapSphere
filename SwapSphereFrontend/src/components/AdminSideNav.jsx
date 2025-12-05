@@ -7,6 +7,7 @@ export default function AdminSideNav() {
   const items = [
     { label: "Dashboard", to: "/admin/dashboard" },
     { label: "Search", to: "/admin/search" },
+    { label: "Chat", to: "/admin/chat" },
     { label: "Reports", to: "/admin/reports" },
   ];
 
