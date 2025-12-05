@@ -1,7 +1,7 @@
 import React from "react";
 import "../styles/ReportCard.css";
 
-export default function ReportCard({ report, onMarkTreated, onViewProfile }) {
+export default function ReportCard({ report, onMarkTreated, onViewProfile, onViewChat }) {
   const reporter = report.reporter?.username || report.reporterUsername || "Unknown";
   const reported = report.reported?.username || report.reportedUsername || "Unknown";
   const reason = report.reason || "No reason provided";
@@ -36,6 +36,9 @@ export default function ReportCard({ report, onMarkTreated, onViewProfile }) {
       <div className="report-actions">
         <button className="btn-view-profile" onClick={() => onViewProfile(reported)}>
           View Profile
+        </button>
+        <button className="btn-view-chat" onClick={() => onViewChat(report)}>
+          View Chat
         </button>
         <button className="btn-mark-treated" onClick={() => onMarkTreated(report)}>
           Mark as Treated

@@ -174,6 +174,48 @@ export default function ChatPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, currentUser, selectedUser])
 
+  // Admin view: open conversation between two users specified in query params
+  useEffect(() => {
+    const adminView = searchParams.get('adminView') === 'true'
+    const user1 = searchParams.get('user1')
+    const user2 = searchParams.get('user2')
+    if (!adminView || !user1 || !user2) return
+
+    const fetchAdminConversation = async () => {
+      try {
+        const res = await chatApi.get(`/api/chat/messages/${encodeURIComponent(user1)}/${encodeURIComponent(user2)}`)
+        const data = typeof res.data === 'string' ? JSON.parse(res.data) : res.data
+        const msgs = data && data.messages ? data.messages : (Array.isArray(data) ? data : [])
+        const normalized = (msgs || []).map(m => ({
+          id: m.id,
+          sender: m.sender,
+          receiver: m.receiver,
+          text: m.text,
+          createdAt: m.createdAt || m.timestamp || new Date().toISOString(),
+          isEdited: m.isEdited || false
+        }))
+        setMessages(sortMessagesAsc(normalized))
+        // Fetch user2 profile so ChatWindow has a `name` to display (avoid undefined accesses)
+        try {
+          const ures = await chatApi.get(`/api/auth/user/${encodeURIComponent(user2)}`)
+          const udata = typeof ures.data === 'string' ? JSON.parse(ures.data) : ures.data
+          let profile = null
+          if (udata && udata.success && udata.user) profile = udata.user
+          else if (udata && udata.username) profile = udata
+          setSelectedUser({ username: user2, name: profile?.name || profile?.fullName || user2 })
+        } catch (err) {
+          // fallback to simple object with username only
+          setSelectedUser({ username: user2, name: user2 })
+        }
+      } catch (err) {
+        console.error('Failed to fetch admin conversation:', err)
+      }
+    }
+
+    fetchAdminConversation()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
+
   const handleSelectUser = async (user) => {
     setSelectedUser(user)
     setMessages([])

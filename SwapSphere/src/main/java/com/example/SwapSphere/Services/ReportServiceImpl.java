@@ -45,4 +45,10 @@ public class ReportServiceImpl implements ReportService {
         System.out.println("Retrieved reports: " + result);
         return result;
     }
+
+    @Override
+    public void markAsTreated(Long reportId){
+        String sql = "UPDATE Reports SET status = 'TREATED' WHERE report_id = ?";
+        template.update(sql, reportId);
+    }
 }

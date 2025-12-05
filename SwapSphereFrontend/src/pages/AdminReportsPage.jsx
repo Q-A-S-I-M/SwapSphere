@@ -51,6 +51,7 @@ export default function AdminReportsPage() {
         const reportId = report.reportId || report.id;
         return rId !== reportId;
       }));
+      await axios.put("/reports", report);
 
       alert("Report marked as treated successfully.");
     } catch (err) {
@@ -62,14 +63,21 @@ export default function AdminReportsPage() {
   const handleViewProfile = (username) => {
     navigate(`/admin/profile/${username}`);
   };
+  const handleViewChat = (report) => {
+    // extract reporter and reported usernames safely
+    const reporter = report.reporter?.username || report.reporterUsername;
+    const reported = report.reported?.username || report.reportedUsername;
+    if (!reporter || !reported) {
+      alert("Cannot open chat: missing usernames");
+      return;
+    }
 
-  if (loading) {
-    return (
-      <div className="admin-reports-page">
-        <div className="loading-state">Loading reports...</div>
-      </div>
+    navigate(
+      `/admin/chat?user1=${encodeURIComponent(reporter)}&user2=${encodeURIComponent(reported)}&adminView=true`
     );
-  }
+  };
+
+  
 
   return (
     <div className="admin-reports-page">
@@ -98,6 +106,7 @@ export default function AdminReportsPage() {
                 report={report}
                 onMarkTreated={handleMarkTreated}
                 onViewProfile={handleViewProfile}
+                onViewChat={handleViewChat}
               />
             );
           })}

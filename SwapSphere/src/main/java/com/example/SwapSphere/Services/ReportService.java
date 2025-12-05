@@ -9,5 +9,7 @@ public interface ReportService {
     Report createReport(Report report);
 
     List<Report> getAllReports();
+
+    void markAsTreated(Long reportId);
     
 }
