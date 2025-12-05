@@ -57,9 +57,6 @@ export default function UserList({ currentUser, selectedUser, onSelectUser, onOn
     <div className="user-list">
       <div className="user-list-header">
         <h2>Chats</h2>
-        <button className="logout-btn" onClick={onLogout} title="Logout">
-          🚪
-        </button>
       </div>
 
       <div className="user-list-profile">

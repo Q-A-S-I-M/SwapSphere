@@ -1,7 +1,8 @@
 .chat-page {
   display: flex;
   height: 100vh;
-  background: #f5f5f5;
+  background: var(--bg);
+  color: var(--text);
 }
 
 .no-chat-selected {
@@ -9,12 +10,13 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background: white;
+  background: var(--card);
+  border-left: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .empty-state {
   text-align: center;
-  color: #999;
+  color: var(--muted);
   font-size: 1.2rem;
 }
 
