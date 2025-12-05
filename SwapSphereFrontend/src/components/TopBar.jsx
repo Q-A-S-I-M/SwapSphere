@@ -8,15 +8,19 @@ export default function TopBar() {
 
   const handleLogout = async () => {
     try {
-      // Call backend to invalidate refresh token
-      await axios.post("/auth/logout", { username: user?.username });
-
-      // Clear frontend auth context
-      logout();
+      // Call backend to invalidate refresh token (send cookies with withCredentials)
+      await axios.post("/auth/logout", {}, {
+        withCredentials: true
+      });
     } catch (err) {
-      console.error("Logout failed", err);
-      alert("Failed to logout");
+      // Even if backend logout fails, proceed with frontend logout
+      // (cookies might already be cleared or token might be expired)
+      console.error("Backend logout failed (proceeding anyway):", err);
     }
+    
+    // Always clear frontend auth context and redirect
+    logout();
+    window.location.href = '/';
   };
 
   return (

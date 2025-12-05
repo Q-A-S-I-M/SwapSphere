@@ -30,16 +30,14 @@ public class OfferedItemsServiceImpl implements OfferedItemsService {
     @Override
     public OfferedItem createItem(OfferedItem item) {
 
-        String sql = "INSERT INTO offered_items (username, title, description, category, item_condition, priority, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())";
+        String sql = "INSERT INTO offered_items (username, title, description, category, item_condition, priority, status, created_at) VALUES (?, ?, ?, ?, ?, 0, 'AVAILABLE', NOW())";
 
         template.update(sql,
                 item.getUser().getUsername(),
                 item.getTitle(),
                 item.getDescription(),
                 item.getCategory(),
-                item.getCondition(),
-                item.getPriority(),
-                item.getStatus()
+                item.getCondition()
         );
 
         String getIdSql = "SELECT LAST_INSERT_ID()";
@@ -71,7 +69,7 @@ public class OfferedItemsServiceImpl implements OfferedItemsService {
             SELECT o.*, MIN(i.img_url) AS first_img
             FROM offered_items o
             LEFT JOIN images i ON o.offered_item_id = i.offered_item_id
-            WHERE o.username = ? AND o.status != 'DELETED'
+            WHERE o.username = ? AND o.status = 'AVAILABLE'
             GROUP BY o.offered_item_id
             ORDER BY o.created_at DESC;
         """;
@@ -113,16 +111,10 @@ public class OfferedItemsServiceImpl implements OfferedItemsService {
         final int PRIORITY_INCREASE = 5;
 
         UserWallet wallet = userWalletService.getWalletByUserId(username);
-        int freeTokens = wallet.getTokensAvailable() - wallet.getTokensLocked();
+        int availableTokens = wallet.getTokensAvailable();
         
-        if (freeTokens < TOKENS_COST) {
-            String message;
-            if (wallet.getTokensAvailable() < TOKENS_COST) {
-                message = "Not enough tokens! You need " + TOKENS_COST + " tokens but only have " + wallet.getTokensAvailable() + " tokens available.";
-            } else {
-                message = "Not enough free tokens! You have " + wallet.getTokensAvailable() + " tokens, but " + wallet.getTokensLocked() + " are locked. Only " + freeTokens + " tokens are available. You need " + TOKENS_COST + " tokens.";
-            }
-            throw new RuntimeException(message);
+        if (availableTokens < TOKENS_COST) {
+            throw new RuntimeException("Not enough tokens! You need " + TOKENS_COST + " tokens but only have " + availableTokens + " tokens available.");
         }
 
         int tokensAvailableBefore = wallet.getTokensAvailable();

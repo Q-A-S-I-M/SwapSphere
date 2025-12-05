@@ -49,27 +49,33 @@ public class NotificationServiceImpl implements NotificationService {
         User username;
         String type;
         String message;
+        String itemTitle = swap.getRequestedItem() != null ? swap.getRequestedItem().getTitle() : "the item";
+        
         switch (status) {
             case "ACCEPTED":
                 username = swap.getSender();
-                type = "GREEN";
-                message = "Great news! "+swap.getReceiver().getUsername()+" has accepted your swap request for "+swap.getRequestedItem().getTitle()+". The swap is now awaiting confirmation.";
+                type = "BLUE";
+                message = "Great news! "+swap.getReceiver().getUsername()+" has accepted your swap request for "+itemTitle+". The swap is now awaiting confirmation.";
                 break;
             case "REJECTED":
                 username = swap.getSender();
                 type = "RED";
-                message = "Your swap proposal to "+swap.getReceiver().getUsername()+" for "+swap.getRequestedItem().getTitle()+" was rejected.";              
+                message = "Your swap proposal to "+swap.getReceiver().getUsername()+" for "+itemTitle+" was rejected.";              
                 break;
             case "CANCELLED":
+                // This handles cancellation from PENDING status
                 username = swap.getReceiver();
                 type = "RED";
-                message = swap.getSender().getUsername()+" has cancelled the swap request for "+swap.getRequestedItem().getTitle()+".";
+                message = swap.getSender().getUsername()+" has cancelled the swap request for "+itemTitle+".";
                 break;
             case "COMPLETED":
-                username = swap.getSender();
-                type = "GREEN";
-                message = "Your swap with "+swap.getReceiver().getUsername()+" for "+swap.getRequestedItem().getTitle()+" has been completed successfully!";
-                break;
+                // Notify both parties
+                String completedMessage = "Your swap with "+swap.getReceiver().getUsername()+" for "+itemTitle+" has been completed successfully!";
+                addNotification(new Notification(null, swap.getSender(), "BLUE", completedMessage, false, null));
+                
+                String completedMessageReceiver = "Your swap with "+swap.getSender().getUsername()+" for "+itemTitle+" has been completed successfully!";
+                addNotification(new Notification(null, swap.getReceiver(), "BLUE", completedMessageReceiver, false, null));
+                return; // Already added notifications, return early
             default:
                 username = swap.getSender();
                 type = "RED";
@@ -77,6 +83,16 @@ public class NotificationServiceImpl implements NotificationService {
                 break;
         }
         addNotification(new Notification(null, username, type, message, false, null));
+    }
+    
+    @Override
+    public void generateNotificationForCancelledAcceptedSwap(Swap swap, User cancellingUser, User otherUser) {
+        String itemTitle = swap.getRequestedItem() != null ? swap.getRequestedItem().getTitle() : "the item";
+        String type = "RED";
+        
+        // Notify the other party that the swap was cancelled
+        String message = cancellingUser.getUsername() + " has cancelled the accepted swap for " + itemTitle + ". The items are now available again.";
+        addNotification(new Notification(null, otherUser, type, message, false, null));
     }
 
     @Override

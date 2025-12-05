@@ -1,6 +1,33 @@
 import React from "react";
 import "../styles/RatingCard.css";
 
+// Star Rating Component
+const StarRating = ({ score, maxScore = 5, size = "medium" }) => {
+  const starSize = size === "small" ? "14px" : size === "large" ? "24px" : "18px";
+  
+  return (
+    <div className="star-rating" style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>
+      {[...Array(maxScore)].map((_, index) => {
+        const starValue = index + 1;
+        const isFilled = starValue <= score;
+        return (
+          <span
+            key={index}
+            className={isFilled ? "star-filled" : "star-empty"}
+            style={{
+              fontSize: starSize,
+              color: isFilled ? '#ffc107' : '#666',
+              transition: 'color 0.2s ease'
+            }}
+          >
+            ★
+          </span>
+        );
+      })}
+    </div>
+  );
+};
+
 export default function RatingCard({ rating, currentUsername, onDelete }) {
   // Handle both string (legacy) and User object (from backend) formats
   const raterUsername = rating.rater?.username || rating.rater || "Unknown";
@@ -15,8 +42,12 @@ export default function RatingCard({ rating, currentUsername, onDelete }) {
         ) : (
           <div className="rating-avatar-fallback">{raterUsername.charAt(0).toUpperCase()}</div>
         )}
-        <div className="rater">{raterUsername}</div>
-        <div className="score">{rating.score} / 5</div>
+        <div className="rating-user-info">
+          <div className="rater">{raterUsername}</div>
+          <div className="score">
+            <StarRating score={rating.score || 0} />
+          </div>
+        </div>
       </div>
       <div className="rating-right">
         <div className="review">{rating.review || "—"}</div>

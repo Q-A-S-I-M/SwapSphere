@@ -24,6 +24,13 @@ public class UserRowMapper implements RowMapper<User> {
         u.setCountry(rs.getString("country"));
         u.setCity(rs.getString("city"));
         u.setProfilePicUrl(rs.getString("profile_pic_url"));
+        // Handle null values for is_banned
+        boolean isBanned = rs.getBoolean("is_banned");
+        if (rs.wasNull()) {
+            u.setIsBanned(null);
+        } else {
+            u.setIsBanned(isBanned);
+        }
         return u;
     }
 }

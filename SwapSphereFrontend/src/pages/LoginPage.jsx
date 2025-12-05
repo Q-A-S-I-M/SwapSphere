@@ -4,6 +4,20 @@ import { useNavigate } from "react-router-dom";
 import api from "../api/axios"; // your axios instance
 import "../styles/LoginPage.css";
 import { useAuth } from "../context/AuthContext";
+import {
+  validateUsername,
+  validatePassword,
+  validateEmail,
+  validateContact,
+  validateFullName,
+  validateCountry,
+  validateCity,
+  filterUsername,
+  filterContact,
+  filterFullName,
+  filterCountry,
+  filterCity
+} from "../utils/validation";
 
 export default function LoginPage() {
   const [mode, setMode] = useState("login"); // login | register
@@ -24,6 +38,19 @@ export default function LoginPage() {
   // MESSAGES
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  
+  // FIELD VALIDATION ERRORS
+  const [fieldErrors, setFieldErrors] = useState({
+    logUser: "",
+    logPass: "",
+    regUser: "",
+    regPass: "",
+    fullName: "",
+    email: "",
+    contact: "",
+    country: "",
+    city: ""
+  });
 
   // ROLE TOGGLE
   const [role, setRole] = useState("user");
@@ -65,6 +92,17 @@ export default function LoginPage() {
     setCity("");
     setFullName("");
     setContact("");
+    setFieldErrors({
+      logUser: "",
+      logPass: "",
+      regUser: "",
+      regPass: "",
+      fullName: "",
+      email: "",
+      contact: "",
+      country: "",
+      city: ""
+    });
   };
 
   const switchTo = (target) => {
@@ -84,9 +122,19 @@ export default function LoginPage() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setErrorMessage("");
-
-    if (!logUser || !logPass) {
-      setErrorMessage("Please fill in all login fields.");
+    
+    // Validate login fields
+    const usernameValidation = validateUsername(logUser);
+    const passwordValidation = validatePassword(logPass);
+    
+    setFieldErrors({
+      ...fieldErrors,
+      logUser: usernameValidation.error,
+      logPass: passwordValidation.error
+    });
+    
+    if (!usernameValidation.isValid || !passwordValidation.isValid) {
+      setErrorMessage("Please fix the errors in the form.");
       return;
     }
 
@@ -104,9 +152,20 @@ export default function LoginPage() {
 
     } catch (err) {
       console.error(err);
+      // Check for banned account (403 status or ACCOUNT_SEIZED message)
+      if (err.response && err.response.status === 403) {
+        setErrorMessage("Your account has been seized. Please contact support for more information.");
+        return;
+      }
+      
       if (err.response && err.response.data) {
         if (typeof err.response.data === "string") {
-          setErrorMessage(err.response.data);
+          // Check for account seized message
+          if (err.response.data === "ACCOUNT_SEIZED") {
+            setErrorMessage("Your account has been seized. Please contact support for more information.");
+          } else {
+            setErrorMessage(err.response.data);
+          }
         } else if (err.response.data.message) {
           setErrorMessage(err.response.data.message);
         } else {
@@ -129,8 +188,32 @@ export default function LoginPage() {
       return;
     }
 
-    if (!regUser || !regPass || !email || !country || !city || !fullName || !contact) {
-      setErrorMessage("Please fill in all registration fields.");
+    // Validate all registration fields
+    const usernameValidation = validateUsername(regUser);
+    const passwordValidation = validatePassword(regPass);
+    const emailValidation = validateEmail(email);
+    const contactValidation = validateContact(contact);
+    const fullNameValidation = validateFullName(fullName);
+    const countryValidation = validateCountry(country);
+    const cityValidation = validateCity(city);
+    
+    const newFieldErrors = {
+      regUser: usernameValidation.error,
+      regPass: passwordValidation.error,
+      email: emailValidation.error,
+      contact: contactValidation.error,
+      fullName: fullNameValidation.error,
+      country: countryValidation.error,
+      city: cityValidation.error
+    };
+    
+    setFieldErrors({ ...fieldErrors, ...newFieldErrors });
+    
+    if (!usernameValidation.isValid || !passwordValidation.isValid || 
+        !emailValidation.isValid || !contactValidation.isValid || 
+        !fullNameValidation.isValid || !countryValidation.isValid || 
+        !cityValidation.isValid) {
+      setErrorMessage("Please fix the errors in the form.");
       return;
     }
 
@@ -193,8 +276,43 @@ export default function LoginPage() {
                   <button type="button" className={role === "admin" ? "active" : ""} onClick={() => changeRole("admin")}>Admin</button>
                 </div>
 
-                <input type="text" placeholder="Username" className="input-field" value={logUser} onChange={(e) => setLogUser(e.target.value)} />
-                <input type="password" placeholder="Password" className="input-field" value={logPass} onChange={(e) => setLogPass(e.target.value)} />
+                <div>
+                  <input 
+                    type="text" 
+                    placeholder="Username" 
+                    className={`input-field ${fieldErrors.logUser ? 'input-error' : ''}`}
+                    value={logUser} 
+                    onChange={(e) => {
+                      const filtered = filterUsername(e.target.value);
+                      setLogUser(filtered);
+                      const validation = validateUsername(filtered);
+                      setFieldErrors({ ...fieldErrors, logUser: validation.error });
+                    }}
+                    onBlur={() => {
+                      const validation = validateUsername(logUser);
+                      setFieldErrors({ ...fieldErrors, logUser: validation.error });
+                    }}
+                  />
+                  {fieldErrors.logUser && <div className="field-error">{fieldErrors.logUser}</div>}
+                </div>
+                <div>
+                  <input 
+                    type="password" 
+                    placeholder="Password" 
+                    className={`input-field ${fieldErrors.logPass ? 'input-error' : ''}`}
+                    value={logPass} 
+                    onChange={(e) => {
+                      setLogPass(e.target.value);
+                      const validation = validatePassword(e.target.value);
+                      setFieldErrors({ ...fieldErrors, logPass: validation.error });
+                    }}
+                    onBlur={() => {
+                      const validation = validatePassword(logPass);
+                      setFieldErrors({ ...fieldErrors, logPass: validation.error });
+                    }}
+                  />
+                  {fieldErrors.logPass && <div className="field-error">{fieldErrors.logPass}</div>}
+                </div>
 
                 <button type="submit" className="btn-primary">Login</button>
 
@@ -210,13 +328,137 @@ export default function LoginPage() {
 
             {mode === "register" && (
               <form onSubmit={handleRegister} className="register-form">
-                <input type="text" placeholder="Full name" className="input-field" value={fullName} onChange={(e) => setFullName(e.target.value)} />
-                <input type="text" placeholder="Username" className="input-field" value={regUser} onChange={(e) => setRegUser(e.target.value)} />
-                <input type="password" placeholder="Password" className="input-field" value={regPass} onChange={(e) => setRegPass(e.target.value)} />
-                <input type="text" placeholder="Email Address" className="input-field" value={email} onChange={(e) => setEmail(e.target.value)} />
-                <input type="text" placeholder="Contact" className="input-field" value={contact} onChange={(e) => setContact(e.target.value)} />
-                <input type="text" placeholder="Country" className="input-field" value={country} onChange={(e) => setCountry(e.target.value)} />
-                <input type="text" placeholder="City" className="input-field" value={city} onChange={(e) => setCity(e.target.value)} />
+                <div>
+                  <input 
+                    type="text" 
+                    placeholder="Full name" 
+                    className={`input-field ${fieldErrors.fullName ? 'input-error' : ''}`}
+                    value={fullName} 
+                    onChange={(e) => {
+                      const filtered = filterFullName(e.target.value);
+                      setFullName(filtered);
+                      const validation = validateFullName(filtered);
+                      setFieldErrors({ ...fieldErrors, fullName: validation.error });
+                    }}
+                    onBlur={() => {
+                      const validation = validateFullName(fullName);
+                      setFieldErrors({ ...fieldErrors, fullName: validation.error });
+                    }}
+                  />
+                  {fieldErrors.fullName && <div className="field-error">{fieldErrors.fullName}</div>}
+                </div>
+                <div>
+                  <input 
+                    type="text" 
+                    placeholder="Username" 
+                    className={`input-field ${fieldErrors.regUser ? 'input-error' : ''}`}
+                    value={regUser} 
+                    onChange={(e) => {
+                      const filtered = filterUsername(e.target.value);
+                      setRegUser(filtered);
+                      const validation = validateUsername(filtered);
+                      setFieldErrors({ ...fieldErrors, regUser: validation.error });
+                    }}
+                    onBlur={() => {
+                      const validation = validateUsername(regUser);
+                      setFieldErrors({ ...fieldErrors, regUser: validation.error });
+                    }}
+                  />
+                  {fieldErrors.regUser && <div className="field-error">{fieldErrors.regUser}</div>}
+                </div>
+                <div>
+                  <input 
+                    type="password" 
+                    placeholder="Password" 
+                    className={`input-field ${fieldErrors.regPass ? 'input-error' : ''}`}
+                    value={regPass} 
+                    onChange={(e) => {
+                      setRegPass(e.target.value);
+                      const validation = validatePassword(e.target.value);
+                      setFieldErrors({ ...fieldErrors, regPass: validation.error });
+                    }}
+                    onBlur={() => {
+                      const validation = validatePassword(regPass);
+                      setFieldErrors({ ...fieldErrors, regPass: validation.error });
+                    }}
+                  />
+                  {fieldErrors.regPass && <div className="field-error">{fieldErrors.regPass}</div>}
+                </div>
+                <div>
+                  <input 
+                    type="text" 
+                    placeholder="Email Address" 
+                    className={`input-field ${fieldErrors.email ? 'input-error' : ''}`}
+                    value={email} 
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      const validation = validateEmail(e.target.value);
+                      setFieldErrors({ ...fieldErrors, email: validation.error });
+                    }}
+                    onBlur={() => {
+                      const validation = validateEmail(email);
+                      setFieldErrors({ ...fieldErrors, email: validation.error });
+                    }}
+                  />
+                  {fieldErrors.email && <div className="field-error">{fieldErrors.email}</div>}
+                </div>
+                <div>
+                  <input 
+                    type="text" 
+                    placeholder="Contact" 
+                    className={`input-field ${fieldErrors.contact ? 'input-error' : ''}`}
+                    value={contact} 
+                    onChange={(e) => {
+                      const filtered = filterContact(e.target.value);
+                      setContact(filtered);
+                      const validation = validateContact(filtered);
+                      setFieldErrors({ ...fieldErrors, contact: validation.error });
+                    }}
+                    onBlur={() => {
+                      const validation = validateContact(contact);
+                      setFieldErrors({ ...fieldErrors, contact: validation.error });
+                    }}
+                  />
+                  {fieldErrors.contact && <div className="field-error">{fieldErrors.contact}</div>}
+                </div>
+                <div>
+                  <input 
+                    type="text" 
+                    placeholder="Country" 
+                    className={`input-field ${fieldErrors.country ? 'input-error' : ''}`}
+                    value={country} 
+                    onChange={(e) => {
+                      const filtered = filterCountry(e.target.value);
+                      setCountry(filtered);
+                      const validation = validateCountry(filtered);
+                      setFieldErrors({ ...fieldErrors, country: validation.error });
+                    }}
+                    onBlur={() => {
+                      const validation = validateCountry(country);
+                      setFieldErrors({ ...fieldErrors, country: validation.error });
+                    }}
+                  />
+                  {fieldErrors.country && <div className="field-error">{fieldErrors.country}</div>}
+                </div>
+                <div>
+                  <input 
+                    type="text" 
+                    placeholder="City" 
+                    className={`input-field ${fieldErrors.city ? 'input-error' : ''}`}
+                    value={city} 
+                    onChange={(e) => {
+                      const filtered = filterCity(e.target.value);
+                      setCity(filtered);
+                      const validation = validateCity(filtered);
+                      setFieldErrors({ ...fieldErrors, city: validation.error });
+                    }}
+                    onBlur={() => {
+                      const validation = validateCity(city);
+                      setFieldErrors({ ...fieldErrors, city: validation.error });
+                    }}
+                  />
+                  {fieldErrors.city && <div className="field-error">{fieldErrors.city}</div>}
+                </div>
 
                 <button type="submit" className="btn-primary">Register</button>
 

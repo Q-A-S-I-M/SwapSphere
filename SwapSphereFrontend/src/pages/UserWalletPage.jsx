@@ -5,12 +5,21 @@ import Modal from "../components/Modal";
 import SuccessModal from "../components/SuccessModal";
 import ItemTabs from "../components/ItemTabs";
 import { useAuth } from "../context/AuthContext";
+import {
+  validateUsername,
+  validateTokens,
+  filterUsername,
+  validateCardholderName,
+  validateCardNumber,
+  validateExpirationDate,
+  validateCVV,
+  filterCardholderName
+} from "../utils/validation";
 
 export default function UserWalletPage() {
   const { user } = useAuth();
   const [wallet, setWallet] = useState({
     tokensAvailable: 0,
-    tokensLocked: 0,
     tokensSpent: 0
   });
 
@@ -32,10 +41,25 @@ export default function UserWalletPage() {
     tokens: 0,
     usdAmount: 0
   });
+  
+  // Payment form validation errors
+  const [paymentFieldErrors, setPaymentFieldErrors] = useState({
+    cardholderName: "",
+    cardNumber: "",
+    expirationDate: "",
+    securityCode: "",
+    tokens: ""
+  });
 
   const [transferForm, setTransferForm] = useState({
     username: "",
     tokens: 0
+  });
+  
+  // Transfer form validation errors
+  const [transferFieldErrors, setTransferFieldErrors] = useState({
+    username: "",
+    tokens: ""
   });
 
   // Fetch wallet & usages
@@ -67,23 +91,70 @@ export default function UserWalletPage() {
   // Handlers
   const handlePaymentChange = (e) => {
     const { name, value } = e.target;
+    let validation = { isValid: true, error: "" };
+    
     if (name === "tokens") {
       const tokens = parseFloat(value) || 0;
       const usdAmount = tokens / 5; // 1 USD = 5 tokens
       setPaymentForm(prev => ({ ...prev, tokens: tokens, usdAmount: usdAmount }));
+      validation = validateTokens(tokens);
+      setPaymentFieldErrors(prev => ({ ...prev, tokens: validation.error }));
+    } else if (name === "cardNumber") {
+      // Format card number: add spaces every 4 digits
+      const digitsOnly = value.replace(/\s/g, '').replace(/\D/g, '');
+      const formatted = digitsOnly.match(/.{1,4}/g)?.join(' ') || digitsOnly;
+      setPaymentForm(prev => ({ ...prev, [name]: formatted.substring(0, 19) }));
+      validation = validateCardNumber(formatted);
+      setPaymentFieldErrors(prev => ({ ...prev, cardNumber: validation.error }));
+    } else if (name === "expirationDate") {
+      // Format expiration date: MM/YY
+      const digitsOnly = value.replace(/\D/g, '');
+      let formatted = digitsOnly;
+      if (digitsOnly.length >= 2) {
+        formatted = digitsOnly.substring(0, 2) + '/' + digitsOnly.substring(2, 4);
+      }
+      setPaymentForm(prev => ({ ...prev, [name]: formatted.substring(0, 5) }));
+      validation = validateExpirationDate(formatted);
+      setPaymentFieldErrors(prev => ({ ...prev, expirationDate: validation.error }));
+    } else if (name === "securityCode") {
+      // Only allow digits, max 4 characters
+      const digitsOnly = value.replace(/\D/g, '');
+      setPaymentForm(prev => ({ ...prev, [name]: digitsOnly.substring(0, 4) }));
+      validation = validateCVV(digitsOnly);
+      setPaymentFieldErrors(prev => ({ ...prev, securityCode: validation.error }));
+    } else if (name === "cardholderName") {
+      // Allow letters, spaces, hyphens, and apostrophes
+      const filtered = filterCardholderName(value);
+      setPaymentForm(prev => ({ ...prev, [name]: filtered }));
+      validation = validateCardholderName(filtered);
+      setPaymentFieldErrors(prev => ({ ...prev, cardholderName: validation.error }));
     } else {
       setPaymentForm(prev => ({ ...prev, [name]: value }));
     }
   };
 
   const handleBuyTokens = async () => {
-    if (!paymentForm.tokens || paymentForm.tokens <= 0) {
-      alert("Please enter a valid number of tokens");
-      return;
-    }
-
-    if (!paymentForm.cardholderName || !paymentForm.cardNumber || !paymentForm.expirationDate || !paymentForm.securityCode) {
-      alert("Please fill in all payment details");
+    // Validate all fields
+    const cardholderValidation = validateCardholderName(paymentForm.cardholderName);
+    const cardNumberValidation = validateCardNumber(paymentForm.cardNumber);
+    const expirationValidation = validateExpirationDate(paymentForm.expirationDate);
+    const cvvValidation = validateCVV(paymentForm.securityCode);
+    const tokensValidation = validateTokens(paymentForm.tokens);
+    
+    const newFieldErrors = {
+      cardholderName: cardholderValidation.error,
+      cardNumber: cardNumberValidation.error,
+      expirationDate: expirationValidation.error,
+      securityCode: cvvValidation.error,
+      tokens: tokensValidation.error
+    };
+    
+    setPaymentFieldErrors(newFieldErrors);
+    
+    if (!cardholderValidation.isValid || !cardNumberValidation.isValid || 
+        !expirationValidation.isValid || !cvvValidation.isValid || 
+        !tokensValidation.isValid) {
+      alert("Please fix the errors in the form.");
       return;
     }
 
@@ -117,7 +188,19 @@ export default function UserWalletPage() {
 
   const handleTransferChange = (e) => {
     const { name, value } = e.target;
-    setTransferForm(prev => ({ ...prev, [name]: value }));
+    let filteredValue = value;
+    let validation = { isValid: true, error: "" };
+    
+    if (name === "username") {
+      filteredValue = filterUsername(value);
+      validation = validateUsername(filteredValue);
+    } else if (name === "tokens") {
+      const numValue = Number(value);
+      validation = validateTokens(numValue);
+    }
+    
+    setTransferForm(prev => ({ ...prev, [name]: name === "tokens" ? Number(filteredValue) || 0 : filteredValue }));
+    setTransferFieldErrors(prev => ({ ...prev, [name]: validation.error }));
   };
 
   const handleCloseBuyModal = () => {
@@ -130,6 +213,13 @@ export default function UserWalletPage() {
       tokens: 0,
       usdAmount: 0
     });
+    setPaymentFieldErrors({
+      cardholderName: "",
+      cardNumber: "",
+      expirationDate: "",
+      securityCode: "",
+      tokens: ""
+    });
   };
 
   const handleCloseTransferModal = () => {
@@ -138,15 +228,28 @@ export default function UserWalletPage() {
       username: "",
       tokens: 0
     });
+    setTransferFieldErrors({
+      username: "",
+      tokens: ""
+    });
   };
 
   const handleTransferTokens = async () => {
-    if (!transferForm.username || !transferForm.tokens || transferForm.tokens <= 0) {
-      alert("Please enter a valid username and token amount");
+    // Validate fields
+    const usernameValidation = validateUsername(transferForm.username);
+    const tokensValidation = validateTokens(transferForm.tokens);
+    
+    setTransferFieldErrors({
+      username: usernameValidation.error,
+      tokens: tokensValidation.error
+    });
+    
+    if (!usernameValidation.isValid || !tokensValidation.isValid) {
+      alert("Please fix the errors in the form.");
       return;
     }
 
-    if (transferForm.tokens > wallet.tokensAvailable - wallet.tokensLocked) {
+    if (transferForm.tokens > wallet.tokensAvailable) {
       alert("Not enough available tokens to transfer");
       return;
     }
@@ -175,7 +278,20 @@ export default function UserWalletPage() {
       });
     } catch (err) {
       console.error(err);
-      alert("Failed to transfer tokens: " + (err.response?.data?.message || err.message));
+      let errorMessage = "Failed to transfer tokens.";
+      
+      if (err.response?.data) {
+        // Backend returns error message as string in response body
+        if (typeof err.response.data === "string") {
+          errorMessage = err.response.data;
+        } else if (err.response.data.message) {
+          errorMessage = err.response.data.message;
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      alert(errorMessage);
     }
   };
 
@@ -231,10 +347,6 @@ export default function UserWalletPage() {
           <div className="wallet-value">{wallet.tokensAvailable || 0}</div>
         </div>
         <div className="wallet-card">
-          <div>Locked Tokens</div>
-          <div className="wallet-value">{wallet.tokensLocked || 0}</div>
-        </div>
-        <div className="wallet-card">
           <div>Spent Tokens</div>
           <div className="wallet-value">{wallet.tokensSpent || 0}</div>
         </div>
@@ -249,23 +361,57 @@ export default function UserWalletPage() {
       <ItemTabs
         offeredCount={swapUsage.length}
         wantedCount={featureUsage.length}
-        offeredLabel="Swap Usage"
+        offeredLabel="Transactions"
         wantedLabel="Feature Usage"
         showRatings={false}
         renderContent={(activeTab) => {
           if (activeTab === "offered") return (
             <div className="items-list">
               {swapUsage.length === 0 ? (
-                <div className="usage-card">No swap usage logs found.</div>
+                <div className="usage-card">No transactions found.</div>
               ) : (
-                swapUsage.map(s => (
-                  <div key={s.swapUsageId} className="usage-card">
-                    <strong>Usage ID:</strong> {s.swapUsageId} <br/>
-                    <strong>Counterparty:</strong> {s.counterparty?.username || "N/A"} <br/>
-                    <strong>Tokens Used:</strong> {s.tokensUsed} <br/>
-                    <strong>Created:</strong> {s.createdAt ? new Date(s.createdAt).toLocaleString() : "N/A"}
-                  </div>
-                ))
+                swapUsage.map(s => {
+                  const isSent = s.user?.username === user?.username;
+                  const otherParty = isSent ? s.counterparty : s.user;
+                  const transactionType = isSent ? "Sent" : "Received";
+                  const transactionColor = isSent ? "#ff6b6b" : "#4caf50";
+                  
+                  return (
+                    <div key={s.swapUsageId} className="usage-card" style={{
+                      borderLeft: `4px solid ${transactionColor}`,
+                      padding: '16px',
+                      marginBottom: '12px',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      borderRadius: '8px'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                        <div>
+                          <div style={{ 
+                            display: 'inline-block', 
+                            padding: '4px 12px', 
+                            borderRadius: '12px', 
+                            fontSize: '12px', 
+                            fontWeight: '600',
+                            background: `${transactionColor}20`,
+                            color: transactionColor,
+                            marginBottom: '8px'
+                          }}>
+                            {transactionType}
+                          </div>
+                          <div style={{ fontSize: '20px', fontWeight: '700', color: transactionColor, marginTop: '4px' }}>
+                            {isSent ? '-' : '+'}{s.tokensUsed} tokens
+                          </div>
+                        </div>
+                        <div style={{ textAlign: 'right', fontSize: '12px', color: '#cccccc' }}>
+                          {s.createdAt ? new Date(s.createdAt).toLocaleString() : "N/A"}
+                        </div>
+                      </div>
+                      <div style={{ fontSize: '14px', color: '#ffffff', marginTop: '8px' }}>
+                        <strong>{isSent ? 'To:' : 'From:'}</strong> {otherParty?.username || "N/A"}
+                      </div>
+                    </div>
+                  );
+                })
               )}
             </div>
           );
@@ -317,20 +463,127 @@ export default function UserWalletPage() {
         <Modal onClose={handleCloseBuyModal} title="Buy Tokens">
           <div style={{ marginBottom: '16px' }}>
             <label>Cardholder Name</label>
-            <input type="text" name="cardholderName" placeholder="Enter cardholder name" value={paymentForm.cardholderName} onChange={handlePaymentChange} />
+            <input 
+              type="text" 
+              name="cardholderName" 
+              placeholder="Enter cardholder name" 
+              value={paymentForm.cardholderName} 
+              onChange={handlePaymentChange}
+              onBlur={(e) => {
+                const validation = validateCardholderName(e.target.value);
+                setPaymentFieldErrors(prev => ({ ...prev, cardholderName: validation.error }));
+              }}
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                background: paymentFieldErrors.cardholderName ? 'rgba(255, 76, 76, 0.1)' : 'rgba(255, 255, 255, 0.1)',
+                color: '#ffffff',
+                border: `2px solid ${paymentFieldErrors.cardholderName ? '#ff4c4c' : 'rgba(255, 255, 255, 0.3)'}`,
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontFamily: 'inherit',
+                boxSizing: 'border-box'
+              }}
+            />
+            {paymentFieldErrors.cardholderName && (
+              <div style={{ color: '#f99', fontSize: '0.85rem', marginTop: '4px', paddingLeft: '4px' }}>
+                {paymentFieldErrors.cardholderName}
+              </div>
+            )}
           </div>
           <div style={{ marginBottom: '16px' }}>
             <label>Card Number</label>
-            <input type="text" name="cardNumber" placeholder="1234 5678 9012 3456" value={paymentForm.cardNumber} onChange={handlePaymentChange} maxLength="19" />
+            <input 
+              type="text" 
+              name="cardNumber" 
+              placeholder="1234 5678 9012 3456" 
+              value={paymentForm.cardNumber} 
+              onChange={handlePaymentChange}
+              onBlur={(e) => {
+                const validation = validateCardNumber(e.target.value);
+                setPaymentFieldErrors(prev => ({ ...prev, cardNumber: validation.error }));
+              }}
+              maxLength="19"
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                background: paymentFieldErrors.cardNumber ? 'rgba(255, 76, 76, 0.1)' : 'rgba(255, 255, 255, 0.1)',
+                color: '#ffffff',
+                border: `2px solid ${paymentFieldErrors.cardNumber ? '#ff4c4c' : 'rgba(255, 255, 255, 0.3)'}`,
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontFamily: 'inherit',
+                boxSizing: 'border-box'
+              }}
+            />
+            {paymentFieldErrors.cardNumber && (
+              <div style={{ color: '#f99', fontSize: '0.85rem', marginTop: '4px', paddingLeft: '4px' }}>
+                {paymentFieldErrors.cardNumber}
+              </div>
+            )}
           </div>
           <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
             <div style={{ flex: 1 }}>
               <label>Expiration Date</label>
-              <input type="text" name="expirationDate" placeholder="MM/YY" value={paymentForm.expirationDate} onChange={handlePaymentChange} maxLength="5" />
+              <input 
+                type="text" 
+                name="expirationDate" 
+                placeholder="MM/YY" 
+                value={paymentForm.expirationDate} 
+                onChange={handlePaymentChange}
+                onBlur={(e) => {
+                  const validation = validateExpirationDate(e.target.value);
+                  setPaymentFieldErrors(prev => ({ ...prev, expirationDate: validation.error }));
+                }}
+                maxLength="5"
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  background: paymentFieldErrors.expirationDate ? 'rgba(255, 76, 76, 0.1)' : 'rgba(255, 255, 255, 0.1)',
+                  color: '#ffffff',
+                  border: `2px solid ${paymentFieldErrors.expirationDate ? '#ff4c4c' : 'rgba(255, 255, 255, 0.3)'}`,
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontFamily: 'inherit',
+                  boxSizing: 'border-box'
+                }}
+              />
+              {paymentFieldErrors.expirationDate && (
+                <div style={{ color: '#f99', fontSize: '0.85rem', marginTop: '4px', paddingLeft: '4px' }}>
+                  {paymentFieldErrors.expirationDate}
+                </div>
+              )}
             </div>
             <div style={{ flex: 1 }}>
               <label>CVV</label>
-              <input type="text" name="securityCode" placeholder="123" value={paymentForm.securityCode} onChange={handlePaymentChange} maxLength="4" />
+              <input 
+                type="text" 
+                name="securityCode" 
+                placeholder="123" 
+                value={paymentForm.securityCode} 
+                onChange={handlePaymentChange}
+                onBlur={(e) => {
+                  const validation = validateCVV(e.target.value);
+                  setPaymentFieldErrors(prev => ({ ...prev, securityCode: validation.error }));
+                }}
+                maxLength="4"
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  background: paymentFieldErrors.securityCode ? 'rgba(255, 76, 76, 0.1)' : 'rgba(255, 255, 255, 0.1)',
+                  color: '#ffffff',
+                  border: `2px solid ${paymentFieldErrors.securityCode ? '#ff4c4c' : 'rgba(255, 255, 255, 0.3)'}`,
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  fontFamily: 'inherit',
+                  boxSizing: 'border-box'
+                }}
+              />
+              {paymentFieldErrors.securityCode && (
+                <div style={{ color: '#f99', fontSize: '0.85rem', marginTop: '4px', paddingLeft: '4px' }}>
+                  {paymentFieldErrors.securityCode}
+                </div>
+              )}
             </div>
           </div>
           
@@ -344,11 +597,30 @@ export default function UserWalletPage() {
                   name="tokens" 
                   placeholder="Enter tokens" 
                   value={paymentForm.tokens || ''} 
-                  onChange={handlePaymentChange} 
+                  onChange={handlePaymentChange}
+                  onBlur={(e) => {
+                    const validation = validateTokens(Number(e.target.value));
+                    setPaymentFieldErrors(prev => ({ ...prev, tokens: validation.error }));
+                  }}
                   min="1" 
                   step="1"
-                  style={{ width: '100%', background: 'rgba(255, 255, 255, 0.1)', color: '#ffffff', border: '2px solid rgba(255, 255, 255, 0.3)', borderRadius: '8px', padding: '12px 16px', fontSize: '14px' }}
+                  style={{ 
+                    width: '100%', 
+                    background: paymentFieldErrors.tokens ? 'rgba(255, 76, 76, 0.1)' : 'rgba(255, 255, 255, 0.1)', 
+                    color: '#ffffff', 
+                    border: `2px solid ${paymentFieldErrors.tokens ? '#ff4c4c' : 'rgba(255, 255, 255, 0.3)'}`, 
+                    borderRadius: '8px', 
+                    padding: '12px 16px', 
+                    fontSize: '14px',
+                    fontFamily: 'inherit',
+                    boxSizing: 'border-box'
+                  }}
                 />
+                {paymentFieldErrors.tokens && (
+                  <div style={{ color: '#f99', fontSize: '0.85rem', marginTop: '4px', paddingLeft: '4px' }}>
+                    {paymentFieldErrors.tokens}
+                  </div>
+                )}
               </div>
               <div style={{ fontSize: '20px', color: '#ffffff', paddingBottom: '8px' }}>=</div>
               <div style={{ flex: 1 }}>
@@ -388,19 +660,72 @@ export default function UserWalletPage() {
         <Modal onClose={handleCloseTransferModal} title="Transfer Tokens">
           <div style={{ marginBottom: '16px' }}>
             <label>Recipient Username</label>
-            <input type="text" name="username" placeholder="Enter recipient username" value={transferForm.username} onChange={handleTransferChange} />
+            <input 
+              type="text" 
+              name="username" 
+              placeholder="Enter recipient username" 
+              value={transferForm.username} 
+              onChange={handleTransferChange}
+              onBlur={(e) => {
+                const validation = validateUsername(e.target.value);
+                setTransferFieldErrors(prev => ({ ...prev, username: validation.error }));
+              }}
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                background: transferFieldErrors.username ? 'rgba(255, 76, 76, 0.1)' : 'rgba(255, 255, 255, 0.1)',
+                color: '#ffffff',
+                border: `2px solid ${transferFieldErrors.username ? '#ff4c4c' : 'rgba(255, 255, 255, 0.3)'}`,
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontFamily: 'inherit',
+                boxSizing: 'border-box'
+              }}
+            />
+            {transferFieldErrors.username && (
+              <div style={{ color: '#f99', fontSize: '0.85rem', marginTop: '4px', paddingLeft: '4px' }}>
+                {transferFieldErrors.username}
+              </div>
+            )}
           </div>
           <div style={{ marginBottom: '20px' }}>
             <label>Tokens to Transfer</label>
-            <input type="number" name="tokens" placeholder="Enter amount" value={transferForm.tokens || ''} onChange={handleTransferChange} min="1" />
+            <input 
+              type="number" 
+              name="tokens" 
+              placeholder="Enter amount" 
+              value={transferForm.tokens || ''} 
+              onChange={handleTransferChange}
+              onBlur={(e) => {
+                const validation = validateTokens(Number(e.target.value));
+                setTransferFieldErrors(prev => ({ ...prev, tokens: validation.error }));
+              }}
+              min="1"
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                background: transferFieldErrors.tokens ? 'rgba(255, 76, 76, 0.1)' : 'rgba(255, 255, 255, 0.1)',
+                color: '#ffffff',
+                border: `2px solid ${transferFieldErrors.tokens ? '#ff4c4c' : 'rgba(255, 255, 255, 0.3)'}`,
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontFamily: 'inherit',
+                boxSizing: 'border-box'
+              }}
+            />
+            {transferFieldErrors.tokens && (
+              <div style={{ color: '#f99', fontSize: '0.85rem', marginTop: '4px', paddingLeft: '4px' }}>
+                {transferFieldErrors.tokens}
+              </div>
+            )}
           </div>
           {transferForm.tokens > 0 && (
             <div style={{ marginBottom: '20px', padding: '12px', background: '#fff3cd', borderRadius: '8px', border: '1px solid #ffc107' }}>
               <div style={{ fontSize: '12px', color: '#856404', marginBottom: '4px' }}>Available Tokens</div>
               <div style={{ fontSize: '16px', fontWeight: '600', color: '#856404' }}>
-                {wallet.tokensAvailable - wallet.tokensLocked} tokens available
+                {wallet.tokensAvailable} tokens available
               </div>
-              {transferForm.tokens > wallet.tokensAvailable - wallet.tokensLocked && (
+              {transferForm.tokens > wallet.tokensAvailable && (
                 <div style={{ fontSize: '12px', color: '#dc3545', marginTop: '8px' }}>
                   ⚠️ Insufficient tokens available
                 </div>

@@ -7,10 +7,8 @@ import com.example.SwapSphere.Entities.UserWallet;
 public interface UserWalletService {
 
     UserWallet getWalletByUserId(String userId);
-    UserWallet lockTokens(String username, int tokens);
     UserWallet addTokens(String username, int tokens);
     UserWallet spendTokens(String username, int tokens);
-    UserWallet tokensUnlock(String username, int tokens);
     UserWallet transferTokens(String username, TokensTransfer transfer);
     UserWallet buyTokens(TokenPayment payment);
     
