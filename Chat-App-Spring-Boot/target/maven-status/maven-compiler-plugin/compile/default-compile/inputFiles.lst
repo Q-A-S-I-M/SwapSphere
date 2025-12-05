@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 D:\UNIVERSITY\SwapSphere\Chat-App-Spring-Boot\src\main\java\com\chatapp\config\WebSocketConfig.java
 D:\UNIVERSITY\SwapSphere\Chat-App-Spring-Boot\src\main\java\com\chatapp\models\Account.java
 D:\UNIVERSITY\SwapSphere\Chat-App-Spring-Boot\src\main\java\com\chatapp\repositories\AccountRepository.java
@@ -15,21 +14,3 @@ D:\UNIVERSITY\SwapSphere\Chat-App-Spring-Boot\src\main\java\com\chatapp\websocke
 D:\UNIVERSITY\SwapSphere\Chat-App-Spring-Boot\src\main\java\com\chatapp\repositories\MessageRepository.java
 D:\UNIVERSITY\SwapSphere\Chat-App-Spring-Boot\src\main\java\com\chatapp\models\User.java
 D:\UNIVERSITY\SwapSphere\Chat-App-Spring-Boot\src\main\java\com\chatapp\models\DirectChat.java
-=======
-C:\Users\Survolt\SwapSphere\chat-app-spring-boot\src\main\java\com\chatapp\models\DirectChat.java
-C:\Users\Survolt\SwapSphere\chat-app-spring-boot\src\main\java\com\chatapp\config\CorsConfig.java
-C:\Users\Survolt\SwapSphere\chat-app-spring-boot\src\main\java\com\chatapp\repositories\AccountRepository.java
-C:\Users\Survolt\SwapSphere\chat-app-spring-boot\src\main\java\com\chatapp\config\GsonConfig.java
-C:\Users\Survolt\SwapSphere\chat-app-spring-boot\src\main\java\com\chatapp\repositories\MessageRepository.java
-C:\Users\Survolt\SwapSphere\chat-app-spring-boot\src\main\java\com\chatapp\config\WebSocketConfig.java
-C:\Users\Survolt\SwapSphere\chat-app-spring-boot\src\main\java\com\chatapp\websocket\ChatWebSocketHandler.java
-C:\Users\Survolt\SwapSphere\chat-app-spring-boot\src\main\java\com\chatapp\controllers\ChatController.java
-C:\Users\Survolt\SwapSphere\chat-app-spring-boot\src\main\java\com\chatapp\Application.java
-C:\Users\Survolt\SwapSphere\chat-app-spring-boot\src\main\java\com\chatapp\models\Account.java
-C:\Users\Survolt\SwapSphere\chat-app-spring-boot\src\main\java\com\chatapp\models\Message.java
-C:\Users\Survolt\SwapSphere\chat-app-spring-boot\src\main\java\com\chatapp\controllers\AuthController.java
-C:\Users\Survolt\SwapSphere\chat-app-spring-boot\src\main\java\com\chatapp\repositories\UserRepository.java
-C:\Users\Survolt\SwapSphere\chat-app-spring-boot\src\main\java\com\chatapp\services\AuthService.java
-C:\Users\Survolt\SwapSphere\chat-app-spring-boot\src\main\java\com\chatapp\models\User.java
-C:\Users\Survolt\SwapSphere\chat-app-spring-boot\src\main\java\com\chatapp\services\ChatService.java
->>>>>>> c1601d460dea893c3179f42f228dfd7a59d6a5ae

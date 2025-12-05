@@ -36,6 +36,25 @@ const InteractiveStarRating = ({ score, onScoreChange }) => {
     return '#666'; // Gray for empty stars
   };
 
+  const handleChatWithUser = (username) => {
+    console.log("handleChatWithUser called", { username, authUser });
+    if (!username) {
+      console.warn("No username provided to handleChatWithUser");
+      return;
+    }
+    if (!authUser || !authUser.username) {
+      alert("You must be logged in to start a chat");
+      return;
+    }
+    // If clicking on your own profile, navigate to chat list instead of opening a conversation
+    if (username === authUser.username) {
+      navigate('/chat');
+      return;
+    }
+    // ensure query param is encoded
+    navigate(`/chat?user=${encodeURIComponent(username)}`);
+  }
+
   return (
     <div 
       style={{
@@ -347,6 +366,11 @@ export default function SearchPage() {
       name: item.title || item.name,
       ...item
     };
+  };
+
+  const handleChatWithUser = (username) => {
+    if (!username || !authUser || username === authUser.username) return;
+    navigate(`/chat?user=${username}`);
   };
 
   // Show profile view if viewing a user

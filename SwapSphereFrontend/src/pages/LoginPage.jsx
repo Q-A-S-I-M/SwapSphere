@@ -276,7 +276,7 @@ export default function LoginPage() {
       <div className="split">
         <div className="left">
           <h1 className="brand">SwapSphere</h1>
-          <p className="brand-sub">Trade crypto securely with decentralized swaps and intelligent portfolio management.</p>
+          <p className="brand-sub">Barter securely with decentralized swaps and intelligent portfolio management.</p>
         </div>
 
         <div className="right">

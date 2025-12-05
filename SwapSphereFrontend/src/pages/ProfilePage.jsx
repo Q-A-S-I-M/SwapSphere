@@ -624,6 +624,24 @@ export default function ProfilePage() {
     if (!username || !authUser || username === authUser.username) return;
     navigate(`/chat?user=${username}`);
   };
+  /*const handleChatWithUser = (username) => {
+    console.log("handleChatWithUser called", { username, authUser });
+    if (!username) {
+      console.warn("No username provided to handleChatWithUser");
+      return;
+    }
+    if (!authUser || !authUser.username) {
+      alert("You must be logged in to start a chat");
+      return;
+    }
+    // If clicking on your own profile, navigate to chat list instead of opening a conversation
+    if (username === authUser.username) {
+      navigate('/chat');
+      return;
+    }
+    // ensure query param is encoded
+    navigate(`/chat?user=${encodeURIComponent(username)}`);
+  }*/
 
   if (!user) {
     return (
@@ -681,18 +699,15 @@ export default function ProfilePage() {
           </div>
         )}
         {!isOwnProfile && !isAdminViewingOther && authUser && (
-          <div className="profile-action-col">
-            <button className="btn-chat-user" onClick={() => handleChatWithUser(targetUsername)}>
-              Chat
-            </button>
-            <button className="btn-report-user" onClick={() => {
-              // TODO: Add report modal functionality if needed
-              alert("Report functionality to be implemented");
-            }}>
-              Report User
-            </button>
-          </div>
-        )}
+  <div className="profile-action-col">
+    <button className="btn-chat-user" onClick={() => handleChatWithUser(user.username)}>
+      Chat
+    </button>
+    <button className="btn-report-user" onClick={() => {alert("Report functionality to be implemented");}}>
+      Report User
+    </button>
+  </div>
+)}
       </div>
 
       {/* Tabs */}
