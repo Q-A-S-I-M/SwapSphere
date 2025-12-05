@@ -26,6 +26,7 @@ public class NotificationServiceImpl implements NotificationService {
         String sql = "SELECT * FROM notifications WHERE username = ? ORDER BY created_at DESC";
         List<Notification> notifications = template.query(sql, notificationRowMapper, username);
         for (Notification notification : notifications) {
+            System.out.println("\n"+ notification);
             markAsRead(notification.getNotificationId());
             notification.setRead(true);
         }
@@ -119,5 +120,20 @@ public class NotificationServiceImpl implements NotificationService {
     public void generatePriorityIncreaseNotification(User user, String title) {
         String msg = "Your item "+title+" has been increased by 5 priority.";
         addNotification(new Notification(null, user, "GREEN", msg, false, null));
+    }
+
+    @Override
+    public Notification giveWarning(String username, String reason) {
+        String type = "YELLOW";
+        String message = "Warning: " + reason;
+        User user = new User();
+        user.setUsername(username);
+        Notification notification = new Notification();
+        notification.setUser(user);
+        notification.setType(type);
+        notification.setMessage(message);
+        notification.setRead(false);
+        addNotification(notification);
+        return notification;
     }
 }

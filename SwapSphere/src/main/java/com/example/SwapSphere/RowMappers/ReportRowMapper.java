@@ -20,12 +20,13 @@ public class ReportRowMapper implements RowMapper<Report> {
 
         Report rpt = new Report();
         rpt.setReportId(rs.getLong("report_id"));
-
+        System.out.println("Mapping report with ID: " + rpt.getReportId());
         rpt.setReporter(userService.getUserById(rs.getString("reporter_id")));
         rpt.setReported(userService.getUserById(rs.getString("reported_id")));
-
+        System.out.println("Reporter: " + rpt.getReporter() + ", Reported: " + rpt.getReported());
         rpt.setReason(rs.getString("reason"));
         rpt.setStatus(rs.getString("status"));
+        System.out.println("Reason: " + rpt.getReason() + ", Status: " + rpt.getStatus());
 
         return rpt;
     }

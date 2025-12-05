@@ -674,12 +674,6 @@ export default function ProfilePage() {
             }}>Block</button>
           </div>
         )}
-        {isAdminViewingOther && (
-          <div className="profile-action-col">
-            <button className="btn-warn-user" onClick={() => setWarnModalOpen(true)}>Warn User</button>
-            <button className="btn-block-user" onClick={() => alert("Block functionality not implemented yet")}>Block User</button>
-          </div>
-        )}
       </div>
 
       {/* Tabs */}
@@ -853,6 +847,7 @@ export default function ProfilePage() {
                   try {
                     // TODO: Implement backend endpoint for warning users
                     // await axios.post(`/admin/warn/${targetUsername}`, { reason: warnReason });
+                    await axios.post(`/notifications/warn/${targetUsername}`, { reason: warnReason });
                     alert(`Warning sent to ${targetUsername}: ${warnReason}`);
                     setWarnModalOpen(false);
                     setWarnReason("");

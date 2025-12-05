@@ -28,9 +28,9 @@ export default function ReportCard({ report, onMarkTreated, onViewProfile }) {
           <strong>Reason:</strong>
           <p>{reason}</p>
         </div>
-        <div className="report-date">
+        {/*<div className="report-date">
           <strong>Reported on:</strong> {createdAt}
-        </div>
+        </div>*/}
       </div>
 
       <div className="report-actions">

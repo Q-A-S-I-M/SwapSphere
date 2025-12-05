@@ -19,6 +19,7 @@ export default function AdminReportsPage() {
       setLoading(true);
       const response = await axios.get("/reports");
       // Filter only pending/untreated reports (backend uses 'UNTREATED' status)
+      console.log("Fetched reports:", response.data);
       const pendingReports = (response.data || []).filter(
         r => r.status === "Pending" || !r.status || r.status === "PENDING" || r.status === "UNTREATED"
       );
