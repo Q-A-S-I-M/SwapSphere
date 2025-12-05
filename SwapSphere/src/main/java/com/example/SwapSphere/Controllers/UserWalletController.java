@@ -26,11 +26,6 @@ public class UserWalletController {
         return ResponseEntity.ok(walletService.getWalletByUserId(username));
     }
 
-    @PutMapping("/lock/{username}")
-    public ResponseEntity<UserWallet> lockTokens(@PathVariable String username,@RequestBody int tokens) {
-        return ResponseEntity.ok(walletService.lockTokens(username, tokens));
-    }
-
     @PutMapping("/buy")
     public ResponseEntity<UserWallet> buyTokens(@RequestBody TokenPayment payment) {
         return ResponseEntity.ok(walletService.buyTokens(payment));
@@ -41,13 +36,15 @@ public class UserWalletController {
         return ResponseEntity.ok(walletService.spendTokens(username, tokens));
     }
 
-    @PutMapping("/unlock/{username}")
-    public ResponseEntity<UserWallet> tokensUnlock(@PathVariable String username,@RequestBody int tokens){
-        return ResponseEntity.ok(walletService.tokensUnlock(username, tokens));
-    }
     @PutMapping("/transfer/{username}")
-    public ResponseEntity<UserWallet> tokensTransfer(@PathVariable String username,@RequestBody TokensTransfer transfer){
-        return ResponseEntity.ok(walletService.transferTokens(username, transfer));
+    public ResponseEntity<?> tokensTransfer(@PathVariable String username,@RequestBody TokensTransfer transfer){
+        try {
+            return ResponseEntity.ok(walletService.transferTokens(username, transfer));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("An unexpected error occurred during token transfer.");
+        }
     }
 }
 

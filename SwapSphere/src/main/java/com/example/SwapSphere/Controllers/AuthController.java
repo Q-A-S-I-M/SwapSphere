@@ -49,6 +49,14 @@ public class AuthController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body("Invalid username.");
             }
+            
+            User user = optionalUser.get();
+            // Check if user is banned
+            if (user.getIsBanned() != null && user.getIsBanned()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body("ACCOUNT_SEIZED");
+            }
+            
             var authToken = new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword());
             authManager.authenticate(authToken);
             String jwt = jwtService.generateToken(request.getUsername());
@@ -117,17 +125,18 @@ public class AuthController {
         try {
             System.out.println("🔓 Logout request received");
 
-            if (refreshToken == null) {
-                return ResponseEntity.badRequest().body(Map.of("error", "No refresh token found in cookies"));
+            // Delete refresh token from database if it exists
+            if (refreshToken != null) {
+                Optional<RefreshToken> token = refreshTokenService.findByToken(refreshToken);
+                if (token.isPresent()) {
+                    refreshTokenService.delete(token.get());
+                    System.out.println("✅ Refresh token deleted");
+                }
+            } else {
+                System.out.println("⚠️ No refresh token found in cookies (may already be cleared)");
             }
 
-            Optional<RefreshToken> token = refreshTokenService.findByToken(refreshToken);
-            if (token.isPresent()) {
-                refreshTokenService.delete(token.get());
-                System.out.println("✅ Refresh token deleted");
-            }
-
-            // Invalidate cookies by setting maxAge = 0
+            // Always invalidate cookies by setting maxAge = 0 (even if refresh token was missing)
             ResponseCookie clearAccessToken = ResponseCookie.from("accessToken", "")
                     .httpOnly(true)
                     .secure(false)
@@ -147,10 +156,30 @@ public class AuthController {
             return ResponseEntity.ok()
                     .header("Set-Cookie", clearAccessToken.toString())
                     .header("Set-Cookie", clearRefreshToken.toString())
-                    .body(Map.of("message", "Logged out"));
+                    .body(Map.of("message", "Logged out successfully"));
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(500).body(Map.of("error", "Logout failed: " + e.getMessage()));
+            // Even on error, try to clear cookies
+            ResponseCookie clearAccessToken = ResponseCookie.from("accessToken", "")
+                    .httpOnly(true)
+                    .secure(false)
+                    .path("/")
+                    .maxAge(0)
+                    .sameSite("Strict")
+                    .build();
+
+            ResponseCookie clearRefreshToken = ResponseCookie.from("refreshToken", "")
+                    .httpOnly(true)
+                    .secure(false)
+                    .path("/")
+                    .maxAge(0)
+                    .sameSite("Strict")
+                    .build();
+
+            return ResponseEntity.ok()
+                    .header("Set-Cookie", clearAccessToken.toString())
+                    .header("Set-Cookie", clearRefreshToken.toString())
+                    .body(Map.of("message", "Logged out (with errors)"));
         }
     }
 

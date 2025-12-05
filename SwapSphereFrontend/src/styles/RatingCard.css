@@ -16,8 +16,26 @@
 .rating-avatar-fallback{
   width:48px;height:48px;border-radius:50%;background:#b8860b;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;
 }
-.rater{font-weight:700;color:#ffffff;}
-.score{color:#ffffff;font-size:13px;opacity:0.9;}
+.rating-user-info{
+  display:flex;flex-direction:column;gap:4px;flex:1;
+}
+.rater{font-weight:700;color:#ffffff;font-size:14px;}
+.score{color:#ffffff;font-size:13px;opacity:0.9;display:flex;align-items:center;}
+
+.star-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.star-filled {
+  color: #ffc107;
+}
+
+.star-empty {
+  color: #666;
+  opacity: 0.5;
+}
 
 .rating-right{flex:1;color:#ffffff;}
 .review{line-height:1.5;color:#ffffff;}

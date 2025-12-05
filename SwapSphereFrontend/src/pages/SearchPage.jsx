@@ -11,6 +11,77 @@ import Modal from "../components/Modal";
 import axios from "../api/axios";
 import { useAuth } from "../context/AuthContext";
 
+// Interactive Star Rating Component (Play Store style)
+const InteractiveStarRating = ({ score, onScoreChange }) => {
+  const [hoveredScore, setHoveredScore] = useState(0);
+
+  const handleStarClick = (starValue) => {
+    onScoreChange(starValue);
+  };
+
+  const handleStarHover = (starValue) => {
+    setHoveredScore(starValue);
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredScore(0);
+  };
+
+  const getStarColor = (starValue) => {
+    const displayScore = hoveredScore || score;
+    if (starValue <= displayScore) {
+      return '#ffc107'; // Gold for filled stars
+    }
+    return '#666'; // Gray for empty stars
+  };
+
+  return (
+    <div 
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: '4px',
+        padding: '16px',
+        background: 'rgba(255, 255, 255, 0.05)',
+        borderRadius: '12px',
+        border: '1px solid rgba(255, 255, 255, 0.1)'
+      }}
+      onMouseLeave={handleMouseLeave}
+    >
+      {[1, 2, 3, 4, 5].map((starValue) => (
+        <button
+          key={starValue}
+          type="button"
+          onClick={() => handleStarClick(starValue)}
+          onMouseEnter={() => handleStarHover(starValue)}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '4px',
+            fontSize: '40px',
+            color: getStarColor(starValue),
+            transition: 'all 0.15s ease',
+            lineHeight: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.transform = 'scale(1.2)';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+        >
+          ★
+        </button>
+      ))}
+    </div>
+  );
+};
+
 export default function SearchPage() {
   const { user: authUser } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
@@ -38,7 +109,7 @@ export default function SearchPage() {
   const [ratingModalOpen, setRatingModalOpen] = useState(false);
   const [reportForm, setReportForm] = useState({ reason: "" });
   const [warnForm, setWarnForm] = useState({ reason: "" });
-  const [ratingForm, setRatingForm] = useState({ score: 5, review: "" });
+  const [ratingForm, setRatingForm] = useState({ score: 0, review: "" });
   const [submittingReport, setSubmittingReport] = useState(false);
   const [submittingWarn, setSubmittingWarn] = useState(false);
   const [submittingRating, setSubmittingRating] = useState(false);
@@ -237,9 +308,9 @@ export default function SearchPage() {
             }
             return item;
           });
-          // Filter only Available items and transform to RequestCard format
+          // Filter only AVAILABLE items and transform to RequestCard format
           const formattedItems = transformedItems
-            .filter(item => item.status === "Available")
+            .filter(item => item.status === "AVAILABLE")
             .map(item => ({
               id: item.offeredItemId,
               name: item.title,
@@ -489,7 +560,7 @@ export default function SearchPage() {
           onClose={() => setRequestTarget(null)}
           targetItem={getFormattedTargetItem(requestTarget)}
           myItems={myOfferedItems}
-          myTokens={userWallet ? (userWallet.tokensAvailable - userWallet.tokensLocked) : (authUser?.tokens || 0)}
+          myTokens={userWallet ? userWallet.tokensAvailable : (authUser?.tokens || 0)}
           loadingMyItems={loadingMyItems}
           onConfirm={async (payload) => {
             try {
@@ -512,19 +583,7 @@ export default function SearchPage() {
               }
 
               const tokensToOffer = Number(payload.tokensOffered || 0);
-
-              // Validate token availability on frontend
-              if (tokensToOffer > 0) {
-                // Fetch latest wallet info to ensure we have current data
-                const walletRes = await axios.get(`/wallet/${authUser.username}`);
-                const wallet = walletRes.data;
-                const availableTokens = (wallet.tokensAvailable || 0) - (wallet.tokensLocked || 0);
-                
-                if (availableTokens < tokensToOffer) {
-                  alert(`Not enough tokens available. You have ${availableTokens} tokens available, but trying to offer ${tokensToOffer} tokens.`);
-                  return;
-                }
-              }
+              // No token validation - users can offer any amount of tokens in swaps
 
               // Build the swap request payload using the new DTO format
               // Handle three cases: Item only, Tokens only, Item + Tokens
@@ -712,32 +771,30 @@ export default function SearchPage() {
         {ratingModalOpen && (
           <Modal onClose={() => {
             setRatingModalOpen(false);
-            setRatingForm({ score: 5, review: "" });
+            setRatingForm({ score: 0, review: "" });
           }} title="Give a Review">
-            <div style={{ marginBottom: '16px' }}>
-              <label>Rating Score (1-5)</label>
-              <div style={{ display: 'flex', gap: '8px', marginTop: '8px', marginBottom: '16px' }}>
-                {[1, 2, 3, 4, 5].map(score => (
-                  <button
-                    key={score}
-                    type="button"
-                    onClick={() => setRatingForm({ ...ratingForm, score })}
-                    style={{
-                      flex: 1,
-                      padding: '12px',
-                      background: ratingForm.score === score ? 'var(--gold)' : 'rgba(255, 255, 255, 0.1)',
-                      color: ratingForm.score === score ? '#000' : '#ffffff',
-                      border: `2px solid ${ratingForm.score === score ? 'var(--gold)' : 'rgba(255, 255, 255, 0.3)'}`,
-                      borderRadius: '8px',
-                      fontSize: '18px',
-                      fontWeight: '700',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease'
-                    }}
-                  >
-                    {score}
-                  </button>
-                ))}
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{ display: 'block', marginBottom: '12px', fontSize: '16px', fontWeight: '600', color: '#ffffff' }}>
+                Rate your experience
+              </label>
+              <InteractiveStarRating
+                score={ratingForm.score}
+                onScoreChange={(newScore) => setRatingForm({ ...ratingForm, score: newScore })}
+              />
+              <div style={{ 
+                textAlign: 'center', 
+                fontSize: '14px', 
+                color: '#ffffff', 
+                opacity: 0.8, 
+                marginTop: '12px',
+                fontWeight: '500'
+              }}>
+                {ratingForm.score === 0 ? 'Tap a star to rate' : 
+                 ratingForm.score === 1 ? 'Poor' :
+                 ratingForm.score === 2 ? 'Fair' :
+                 ratingForm.score === 3 ? 'Good' :
+                 ratingForm.score === 4 ? 'Very Good' :
+                 'Excellent'}
               </div>
             </div>
             <div style={{ marginBottom: '20px' }}>
@@ -764,6 +821,10 @@ export default function SearchPage() {
             </div>
             <button
               onClick={async () => {
+                if (ratingForm.score === 0) {
+                  alert("Please select a rating");
+                  return;
+                }
                 if (!ratingForm.review.trim()) {
                   alert("Please write a review message");
                   return;
@@ -797,7 +858,7 @@ export default function SearchPage() {
                   
                   alert("Review submitted successfully");
                   setRatingModalOpen(false);
-                  setRatingForm({ score: 5, review: "" });
+                  setRatingForm({ score: 0, review: "" });
                 } catch (err) {
                   console.error("Error submitting rating:", err);
                   alert("Failed to submit review: " + (err.response?.data || err.message));
@@ -926,7 +987,7 @@ export default function SearchPage() {
         onClose={() => setRequestTarget(null)}
         targetItem={getFormattedTargetItem(requestTarget)}
         myItems={myOfferedItems}
-        myTokens={userWallet ? (userWallet.tokensAvailable - userWallet.tokensLocked) : (authUser?.tokens || 0)}
+        myTokens={userWallet ? userWallet.tokensAvailable : (authUser?.tokens || 0)}
         loadingMyItems={loadingMyItems}
         onConfirm={async (payload) => {
           try {
@@ -955,7 +1016,7 @@ export default function SearchPage() {
               // Fetch latest wallet info to ensure we have current data
               const walletRes = await axios.get(`/wallet/${authUser.username}`);
               const wallet = walletRes.data;
-              const availableTokens = (wallet.tokensAvailable || 0) - (wallet.tokensLocked || 0);
+              const availableTokens = wallet.tokensAvailable || 0;
               
               if (availableTokens < tokensToOffer) {
                 alert(`Not enough tokens available. You have ${availableTokens} tokens available, but trying to offer ${tokensToOffer} tokens.`);

@@ -51,7 +51,10 @@ public class SwapController {
 
     @PutMapping("/{id}/status")
     public ResponseEntity<Swap> updateSwapStatus(@PathVariable Long id, @RequestParam String status) {
-        return ResponseEntity.ok(swapService.updateStatus(id, status));
+        // Get current user from SecurityContext
+        String currentUsername = org.springframework.security.core.context.SecurityContextHolder.getContext()
+                .getAuthentication().getName();
+        return ResponseEntity.ok(swapService.updateStatus(id, status, currentUsername));
     }
 
     @GetMapping("/history/{username}")

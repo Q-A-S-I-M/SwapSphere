@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import com.example.SwapSphere.DTOs.TokensTransfer;
 import com.example.SwapSphere.Entities.TokenPayment;
 import com.example.SwapSphere.Entities.TokenSwapUsage;
+import com.example.SwapSphere.Entities.User;
 import com.example.SwapSphere.Entities.UserWallet;
 
 @Service
@@ -45,24 +46,6 @@ public class UserWalletServiceImpl implements UserWalletService {
     }
 
     @Override
-    public UserWallet lockTokens(String username, int tokens) {
-        UserWallet wallet = getWalletByUserId(username);
-        try{
-            if (wallet.getTokensAvailable()-wallet.getTokensLocked()>=tokens) {
-                wallet.setTokensLocked(wallet.getTokensLocked()+tokens);
-                String sql = "UPDATE user_wallet SET tokens_locked = ? WHERE username = ?";
-                template.update(sql, wallet.getTokensLocked(), username);
-                return wallet;
-            }else{
-                throw new RuntimeException("Not enough tokens!");
-            }
-        }catch(RuntimeException e){
-            System.err.println(e.getMessage());
-        }
-        return wallet;
-    }
-
-    @Override
     public UserWallet addTokens(String username, int tokens) {
         UserWallet wallet = getWalletByUserId(username);
         String sql = "UPDATE user_wallet SET tokens_available = ? WHERE username = ?";
@@ -75,7 +58,7 @@ public class UserWalletServiceImpl implements UserWalletService {
     public UserWallet spendTokens(String username, int tokens) {
         UserWallet wallet = getWalletByUserId(username);
         try{
-            if (wallet.getTokensAvailable()-wallet.getTokensLocked()>= tokens) {
+            if (wallet.getTokensAvailable() >= tokens) {
                 String sql = "UPDATE user_wallet SET tokens_available = ?, tokens_spent = ? WHERE username = ?";
                 wallet.setTokensAvailable(wallet.getTokensAvailable()-tokens);
                 wallet.setTokensSpent(wallet.getTokensSpent()+tokens);
@@ -90,23 +73,35 @@ public class UserWalletServiceImpl implements UserWalletService {
     }
 
     @Override
-    public UserWallet tokensUnlock(String username, int tokens){
-        UserWallet wallet = getWalletByUserId(username);
-        String sql = "UPDATE user_wallet SET tokens_locked = ? WHERE username = ?";
-        wallet.setTokensLocked(wallet.getTokensLocked()-tokens);
-        template.update(sql, wallet.getTokensLocked(), username);
-        return wallet;
-    }
-
-    @Override
     public UserWallet transferTokens(String username1, TokensTransfer transfer) {
         int tokens = transfer.getTokens();
         String user2 = transfer.getUsername();
-        tokensUnlock(username1, tokens);
+        
+        // Validate recipient user exists
+        User recipientUser;
+        try {
+            recipientUser = userService.getUserById(user2);
+        } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+            throw new RuntimeException("Recipient user '" + user2 + "' does not exist.");
+        } catch (Exception e) {
+            throw new RuntimeException("Error validating recipient user: " + e.getMessage());
+        }
+        
+        // Check if recipient is banned
+        if (recipientUser.getIsBanned() != null && recipientUser.getIsBanned()) {
+            throw new RuntimeException("Cannot transfer tokens to a banned user.");
+        }
+        
+        // Check if user has enough available tokens before transferring
+        UserWallet wallet = getWalletByUserId(username1);
+        if (wallet.getTokensAvailable() < tokens) {
+            throw new RuntimeException("Not enough tokens available! You have " + wallet.getTokensAvailable() + " tokens available, but trying to transfer " + tokens + " tokens.");
+        }
+        
         spendTokens(username1, tokens);
         addTokens(user2, tokens);
-        tokenSwapUsageService.addUsage(new TokenSwapUsage(null, userService.getUserById(username1), userService.getUserById(user2), tokens, null));
-        notificationService.tokenTransfer(username1, userService.getUserById(user2), tokens);
+        tokenSwapUsageService.addUsage(new TokenSwapUsage(null, userService.getUserById(username1), recipientUser, tokens, null));
+        notificationService.tokenTransfer(username1, recipientUser, tokens);
         return getWalletByUserId(username1);
     }
 

@@ -8,8 +8,9 @@ const api = axios.create({
 // List of public endpoints that don't need access token
 const EXCLUDED_URLS = [
   '/auth/login',
-  '/auth/register',
   '/auth/refresh',
+  '/auth/logout', // Logout should not trigger token refresh
+  '/users/register', // Registration endpoint
 ];
 
 // No longer attaching token manually from localStorage

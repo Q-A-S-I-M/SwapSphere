@@ -262,6 +262,31 @@
   cursor: not-allowed;
 }
 
+.swap-history-cancel-btn {
+  width: 100%;
+  padding: 12px 24px;
+  background: #f44336;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 12px;
+}
+
+.swap-history-cancel-btn:hover:not(:disabled) {
+  background: #da190b;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(244, 67, 54, 0.3);
+}
+
+.swap-history-cancel-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* Item Details Modal Styles */
 .swap-history-item-details-modal {
   padding: 20px;

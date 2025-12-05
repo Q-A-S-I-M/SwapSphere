@@ -55,6 +55,12 @@
   border-color: rgba(74, 144, 226, 0.3);
 }
 
+.notif-item.yellow {
+  border-left-color: #ffc107;
+  background: rgba(255, 193, 7, 0.15);
+  border-color: rgba(255, 193, 7, 0.3);
+}
+
 .notif-message {
   font-size: 15px;
   font-weight: 500;

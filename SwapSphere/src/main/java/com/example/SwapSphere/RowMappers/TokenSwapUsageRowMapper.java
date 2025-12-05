@@ -4,6 +4,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 
@@ -13,6 +14,7 @@ import com.example.SwapSphere.Services.UserService;
 @Component
 public class TokenSwapUsageRowMapper implements RowMapper<TokenSwapUsage> {
     @Autowired
+    @Lazy
     private UserService userService;
 
     @Override

@@ -24,7 +24,7 @@ public class SearchServiceImpl implements SearchService{
         String sql = """
             SELECT * FROM offered_items 
             WHERE username != ? 
-            AND status = 'Available'
+            AND status = 'AVAILABLE'
             AND (LOWER(title) LIKE LOWER(?) 
                 OR LOWER(description) LIKE LOWER(?) 
                 OR LOWER(category) LIKE LOWER(?)
@@ -54,6 +54,7 @@ public class SearchServiceImpl implements SearchService{
             FROM offered_items oi
             JOIN Users u ON oi.username = u.username
             WHERE oi.username != ?
+            AND oi.status = 'AVAILABLE'
             AND (
                     LOWER(oi.title) LIKE LOWER(?) 
                 OR LOWER(oi.description) LIKE LOWER(?)

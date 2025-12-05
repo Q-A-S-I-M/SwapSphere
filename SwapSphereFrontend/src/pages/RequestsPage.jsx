@@ -15,42 +15,58 @@ export default function RequestsPage() {
   const fetchSentRequests = async () => {
     if (!authUser?.username) return;
     try {
-      setLoading(true);
-      setError(null);
       const response = await axios.get(`/swaps/sender/${authUser.username}`);
       setSentRequests(response.data || []);
     } catch (err) {
       console.error("Error fetching sent requests:", err);
       setError("Failed to load sent requests");
       setSentRequests([]);
-    } finally {
-      setLoading(false);
     }
   };
 
   const fetchReceivedRequests = async () => {
     if (!authUser?.username) return;
     try {
-      setLoading(true);
-      setError(null);
       const response = await axios.get(`/swaps/reciever/${authUser.username}`);
       setReceivedRequests(response.data || []);
     } catch (err) {
       console.error("Error fetching received requests:", err);
       setError("Failed to load received requests");
       setReceivedRequests([]);
-    } finally {
-      setLoading(false);
     }
   };
 
+  // Fetch both sent and received requests when page loads
   useEffect(() => {
+    if (!authUser?.username) return;
+    
+    const fetchAllRequests = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        await Promise.all([
+          fetchSentRequests(),
+          fetchReceivedRequests()
+        ]);
+      } catch (err) {
+        console.error("Error fetching requests:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAllRequests();
+  }, [authUser?.username]);
+
+  // Refresh the active tab when it changes
+  useEffect(() => {
+    if (!authUser?.username) return;
     if (activeTab === "sent") {
       fetchSentRequests();
     } else {
       fetchReceivedRequests();
     }
-  }, [activeTab, authUser?.username]);
+  }, [activeTab]);
 
   const handleStatusUpdate = async (swapId, newStatus) => {
     try {

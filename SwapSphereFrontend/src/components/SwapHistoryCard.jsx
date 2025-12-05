@@ -16,6 +16,7 @@ export default function SwapHistoryCard({ swap, currentUsername, onStatusUpdate 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null);
 
   const getItemImage = (item, imageUrl) => {
     if (imageUrl) return imageUrl;
@@ -56,6 +57,7 @@ export default function SwapHistoryCard({ swap, currentUsername, onStatusUpdate 
   };
 
   const handleMarkComplete = () => {
+    setPendingAction("complete");
     setShowConfirmModal(true);
   };
 
@@ -71,6 +73,7 @@ export default function SwapHistoryCard({ swap, currentUsername, onStatusUpdate 
       alert("Failed to mark swap as complete: " + (err.response?.data?.message || err.message));
     } finally {
       setProcessing(false);
+      setPendingAction(null);
     }
   };
 
@@ -90,6 +93,8 @@ export default function SwapHistoryCard({ swap, currentUsername, onStatusUpdate 
       case "REJECTED": return "#f44336";
       case "CANCELLED": return "#ff9800";
       case "COMPLETED": return "#2196f3";
+      case "HOLD": return "#ffc107";
+      case "PENDING": return "#9e9e9e";
       default: return "#999";
     }
   };
@@ -100,6 +105,8 @@ export default function SwapHistoryCard({ swap, currentUsername, onStatusUpdate 
       case "REJECTED": return "Rejected";
       case "CANCELLED": return "Cancelled";
       case "COMPLETED": return "Completed";
+      case "HOLD": return "On Hold";
+      case "PENDING": return "Pending";
       default: return status || "Unknown";
     }
   };
@@ -114,6 +121,27 @@ export default function SwapHistoryCard({ swap, currentUsername, onStatusUpdate 
   const hasTokens = tokens > 0;
   const isAccepted = swap.status?.toUpperCase() === "ACCEPTED";
   const isSender = sender.username === currentUsername;
+
+  const handleCancel = () => {
+    setShowConfirmModal(true);
+    setPendingAction("cancel");
+  };
+
+  const confirmCancel = async () => {
+    setShowConfirmModal(false);
+    setProcessing(true);
+    try {
+      await onStatusUpdate(swap.swapId, "CANCELLED");
+      setSuccessMessage("Swap cancelled successfully!");
+      setShowSuccessModal(true);
+    } catch (err) {
+      console.error("Error cancelling swap:", err);
+      alert("Failed to cancel swap: " + (err.response?.data?.message || err.message));
+    } finally {
+      setProcessing(false);
+      setPendingAction(null);
+    }
+  };
 
   return (
     <>
@@ -246,7 +274,7 @@ export default function SwapHistoryCard({ swap, currentUsername, onStatusUpdate 
           )}
         </div>
 
-        {/* Mark as Complete Button - Only for Accepted swaps */}
+        {/* Actions - Only for Accepted swaps */}
         {isAccepted && (
           <div className="swap-history-actions">
             <button
@@ -254,7 +282,14 @@ export default function SwapHistoryCard({ swap, currentUsername, onStatusUpdate 
               onClick={handleMarkComplete}
               disabled={processing}
             >
-              {processing ? "Processing..." : "Mark as Complete"}
+              {processing && pendingAction === "complete" ? "Processing..." : "Mark as Complete"}
+            </button>
+            <button
+              className="swap-history-cancel-btn"
+              onClick={handleCancel}
+              disabled={processing}
+            >
+              {processing && pendingAction === "cancel" ? "Processing..." : "Cancel Swap"}
             </button>
           </div>
         )}
@@ -335,16 +370,21 @@ export default function SwapHistoryCard({ swap, currentUsername, onStatusUpdate 
           onClose={() => {
             if (!processing) {
               setShowConfirmModal(false);
+              setPendingAction(null);
             }
           }}
-          title="Mark Swap as Complete"
+          title={pendingAction === "complete" ? "Mark Swap as Complete" : "Cancel Swap"}
         >
           <div className="swap-history-confirm-modal-content">
-            <p>Are you sure you want to mark this swap as complete?</p>
+            <p>
+              {pendingAction === "complete"
+                ? "Are you sure you want to mark this swap as complete?"
+                : "Are you sure you want to cancel this swap? The items will become available again."}
+            </p>
             <div className="swap-history-confirm-modal-actions">
               <button
                 className="swap-history-confirm-btn confirm-yes"
-                onClick={confirmMarkComplete}
+                onClick={pendingAction === "complete" ? confirmMarkComplete : confirmCancel}
                 disabled={processing}
               >
                 {processing ? "Processing..." : "Yes"}
@@ -354,6 +394,7 @@ export default function SwapHistoryCard({ swap, currentUsername, onStatusUpdate 
                 onClick={() => {
                   if (!processing) {
                     setShowConfirmModal(false);
+                    setPendingAction(null);
                   }
                 }}
                 disabled={processing}

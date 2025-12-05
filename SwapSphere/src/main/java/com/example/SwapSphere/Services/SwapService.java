@@ -21,7 +21,7 @@ public interface SwapService {
     List<SwapResponseDTO> getAllSwapsForRecieverWithImagesDTO(String username);
     List<SwapResponseDTO> getAllSwapsForSenderWithImagesDTO(String username);
 
-    Swap updateStatus(Long id, String status);
+    Swap updateStatus(Long id, String status, String currentUsername);
     List<Swap> getSwapHistory(String username);
     List<SwapResponseDTO> getSwapHistoryWithImages(String username);
     

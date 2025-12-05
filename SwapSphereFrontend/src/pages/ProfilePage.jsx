@@ -8,6 +8,88 @@ import RatingCard from "../components/RatingCard";
 import Modal from "../components/Modal"; // simple reusable Modal
 import axios from "../api/axios";
 import { useAuth } from "../context/AuthContext";
+import {
+  validateEmail,
+  validateContact,
+  validateFullName,
+  validateCountry,
+  validateCity,
+  filterContact,
+  filterFullName,
+  filterCountry,
+  filterCity
+} from "../utils/validation";
+
+// Interactive Star Rating Component (Play Store style)
+const InteractiveStarRating = ({ score, onScoreChange }) => {
+  const [hoveredScore, setHoveredScore] = useState(0);
+
+  const handleStarClick = (starValue) => {
+    onScoreChange(starValue);
+  };
+
+  const handleStarHover = (starValue) => {
+    setHoveredScore(starValue);
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredScore(0);
+  };
+
+  const getStarColor = (starValue) => {
+    const displayScore = hoveredScore || score;
+    if (starValue <= displayScore) {
+      return '#ffc107'; // Gold for filled stars
+    }
+    return '#666'; // Gray for empty stars
+  };
+
+  return (
+    <div 
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: '4px',
+        padding: '16px',
+        background: 'rgba(255, 255, 255, 0.05)',
+        borderRadius: '12px',
+        border: '1px solid rgba(255, 255, 255, 0.1)'
+      }}
+      onMouseLeave={handleMouseLeave}
+    >
+      {[1, 2, 3, 4, 5].map((starValue) => (
+        <button
+          key={starValue}
+          type="button"
+          onClick={() => handleStarClick(starValue)}
+          onMouseEnter={() => handleStarHover(starValue)}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '4px',
+            fontSize: '40px',
+            color: getStarColor(starValue),
+            transition: 'all 0.15s ease',
+            lineHeight: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          onMouseOver={(e) => {
+            e.currentTarget.style.transform = 'scale(1.2)';
+          }}
+          onMouseOut={(e) => {
+            e.currentTarget.style.transform = 'scale(1)';
+          }}
+        >
+          ★
+        </button>
+      ))}
+    </div>
+  );
+};
 
 export default function ProfilePage() {
   const { username: urlUsername } = useParams();
@@ -31,6 +113,11 @@ export default function ProfilePage() {
   // Admin controls
   const [warnModalOpen, setWarnModalOpen] = useState(false);
   const [warnReason, setWarnReason] = useState("");
+  
+  // Rating modal
+  const [ratingModalOpen, setRatingModalOpen] = useState(false);
+  const [ratingForm, setRatingForm] = useState({ score: 0, review: "" });
+  const [submittingRating, setSubmittingRating] = useState(false);
 
   // Profile form
   const [profileForm, setProfileForm] = useState({
@@ -44,6 +131,15 @@ export default function ProfilePage() {
     locLong: null,
   });
   const [profilePicPreview, setProfilePicPreview] = useState(null);
+  
+  // Profile form validation errors
+  const [profileFieldErrors, setProfileFieldErrors] = useState({
+    fullName: "",
+    email: "",
+    contact: "",
+    country: "",
+    city: ""
+  });
 
   // Offered Item form
   const [offeredForm, setOfferedForm] = useState({
@@ -52,7 +148,7 @@ export default function ProfilePage() {
     category: "",
     condition: "",
     priority: 0,
-    status: "Available",
+    status: "AVAILABLE",
     images: [],
     imagePreviews: [],
   });
@@ -161,7 +257,36 @@ export default function ProfilePage() {
   // Profile handlers
   const handleProfileChange = (e) => {
     const { name, value } = e.target;
-    setProfileForm(prev => ({ ...prev, [name]: value }));
+    let filteredValue = value;
+    let validation = { isValid: true, error: "" };
+    
+    // Apply filtering and validation based on field type
+    switch (name) {
+      case "fullName":
+        filteredValue = filterFullName(value);
+        validation = validateFullName(filteredValue);
+        break;
+      case "email":
+        validation = validateEmail(value);
+        break;
+      case "contact":
+        filteredValue = filterContact(value);
+        validation = validateContact(filteredValue);
+        break;
+      case "country":
+        filteredValue = filterCountry(value);
+        validation = validateCountry(filteredValue);
+        break;
+      case "city":
+        filteredValue = filterCity(value);
+        validation = validateCity(filteredValue);
+        break;
+      default:
+        filteredValue = value;
+    }
+    
+    setProfileForm(prev => ({ ...prev, [name]: filteredValue }));
+    setProfileFieldErrors(prev => ({ ...prev, [name]: validation.error }));
   };
 
   const handleProfilePicChange = (e) => {
@@ -200,6 +325,13 @@ export default function ProfilePage() {
         locLong: user.locLong !== undefined ? user.locLong : null,
       });
       setProfilePicPreview(user.profilePicUrl || null);
+      setProfileFieldErrors({
+        fullName: "",
+        email: "",
+        contact: "",
+        country: "",
+        city: ""
+      });
     }
   };
   
@@ -228,9 +360,27 @@ export default function ProfilePage() {
         return;
       }
 
-      // Validation
-      if (!profileForm.fullName || !profileForm.email || !profileForm.contact) {
-        alert("Please fill in all required fields (Full Name, Email, Contact)");
+      // Validate all fields
+      const fullNameValidation = validateFullName(profileForm.fullName);
+      const emailValidation = validateEmail(profileForm.email);
+      const contactValidation = validateContact(profileForm.contact);
+      const countryValidation = validateCountry(profileForm.country);
+      const cityValidation = validateCity(profileForm.city);
+      
+      const newFieldErrors = {
+        fullName: fullNameValidation.error,
+        email: emailValidation.error,
+        contact: contactValidation.error,
+        country: countryValidation.error,
+        city: cityValidation.error
+      };
+      
+      setProfileFieldErrors(newFieldErrors);
+      
+      if (!fullNameValidation.isValid || !emailValidation.isValid || 
+          !contactValidation.isValid || !countryValidation.isValid || 
+          !cityValidation.isValid) {
+        alert("Please fix the errors in the form.");
         return;
       }
 
@@ -352,8 +502,8 @@ export default function ProfilePage() {
         description: offeredForm.description || "",
         category: offeredForm.category,
         condition: offeredForm.condition || "Good",
-        priority: offeredForm.priority || 0,
-        status: offeredForm.status || "Available"
+        priority: 0,
+        status: "AVAILABLE"
       };
       const res = await axios.post("/offer-items", itemPayload);
       const newItem = res.data;
@@ -398,7 +548,7 @@ export default function ProfilePage() {
         category: "",
         condition: "",
         priority: 0,
-        status: "Available",
+        status: "AVAILABLE",
         images: [],
         imagePreviews: [],
       });
@@ -446,7 +596,7 @@ export default function ProfilePage() {
       category: "",
       condition: "",
       priority: 0,
-      status: "Available",
+      status: "AVAILABLE",
       images: [],
       imagePreviews: [],
     });
@@ -590,6 +740,13 @@ export default function ProfilePage() {
           );
           if (activeTab === "ratings") return (
             <div className="items-list">
+              {!isOwnProfile && authUser && authUser.username !== targetUsername && (
+                <div style={{ marginBottom: '20px' }}>
+                  <button className="btn-add-item" onClick={() => setRatingModalOpen(true)}>
+                    + Give a Review
+                  </button>
+                </div>
+              )}
               {ratings.length === 0 ? (
                 <div className="empty-note">No ratings yet.</div>
               ) : (
@@ -726,23 +883,83 @@ export default function ProfilePage() {
         <Modal onClose={handleCloseProfileModal} title="Edit Profile">
           <div>
             <label>Full Name *</label>
-            <input className="profile-input-edit" type="text" name="fullName" placeholder="Enter full name" value={profileForm.fullName} onChange={handleProfileChange} />
+            <input 
+              className={`profile-input-edit ${profileFieldErrors.fullName ? 'input-error' : ''}`}
+              type="text" 
+              name="fullName" 
+              placeholder="Enter full name" 
+              value={profileForm.fullName} 
+              onChange={handleProfileChange}
+              onBlur={(e) => {
+                const validation = validateFullName(e.target.value);
+                setProfileFieldErrors(prev => ({ ...prev, fullName: validation.error }));
+              }}
+            />
+            {profileFieldErrors.fullName && <div className="field-error">{profileFieldErrors.fullName}</div>}
           </div>
           <div>
             <label>Email *</label>
-            <input className="profile-input-edit" type="email" name="email" placeholder="Enter email" value={profileForm.email} onChange={handleProfileChange} />
+            <input 
+              className={`profile-input-edit ${profileFieldErrors.email ? 'input-error' : ''}`}
+              type="text" 
+              name="email" 
+              placeholder="Enter email" 
+              value={profileForm.email} 
+              onChange={handleProfileChange}
+              onBlur={(e) => {
+                const validation = validateEmail(e.target.value);
+                setProfileFieldErrors(prev => ({ ...prev, email: validation.error }));
+              }}
+            />
+            {profileFieldErrors.email && <div className="field-error">{profileFieldErrors.email}</div>}
           </div>
           <div>
             <label>Contact *</label>
-            <input className="profile-input-edit" type="text" name="contact" placeholder="Enter contact number" value={profileForm.contact} onChange={handleProfileChange} />
+            <input 
+              className={`profile-input-edit ${profileFieldErrors.contact ? 'input-error' : ''}`}
+              type="text" 
+              name="contact" 
+              placeholder="Enter contact number" 
+              value={profileForm.contact} 
+              onChange={handleProfileChange}
+              onBlur={(e) => {
+                const validation = validateContact(e.target.value);
+                setProfileFieldErrors(prev => ({ ...prev, contact: validation.error }));
+              }}
+            />
+            {profileFieldErrors.contact && <div className="field-error">{profileFieldErrors.contact}</div>}
           </div>
           <div>
             <label>Country</label>
-            <input className="profile-input-edit" type="text" name="country" placeholder="Enter country" value={profileForm.country} onChange={handleProfileChange} />
+            <input 
+              className={`profile-input-edit ${profileFieldErrors.country ? 'input-error' : ''}`}
+              type="text" 
+              name="country" 
+              placeholder="Enter country" 
+              value={profileForm.country} 
+              onChange={handleProfileChange}
+              onBlur={(e) => {
+                const validation = validateCountry(e.target.value);
+                setProfileFieldErrors(prev => ({ ...prev, country: validation.error }));
+              }}
+            />
+            {profileFieldErrors.country && <div className="field-error">{profileFieldErrors.country}</div>}
           </div>
           <div>
             <label>City</label>
-            <input className="profile-input-edit" type="text" name="city" placeholder="Enter city" value={profileForm.city} onChange={handleProfileChange} />
+            <input 
+              className={`profile-input-edit ${profileFieldErrors.city ? 'input-error' : ''}`}
+              type="text" 
+              name="city" 
+              placeholder="Enter city" 
+              value={profileForm.city} 
+              onChange={handleProfileChange}
+              onBlur={(e) => {
+                const validation = validateCity(e.target.value);
+                setProfileFieldErrors(prev => ({ ...prev, city: validation.error }));
+              }}
+            />
+            {profileFieldErrors.city && <div className="field-error">{profileFieldErrors.city}</div>}
           </div>
           <div>
             <label>Profile Picture</label>
@@ -776,10 +993,10 @@ export default function ProfilePage() {
             <label>Condition</label>
             <input className="profile-input-edit" placeholder="e.g., New, Good, Fair" value={offeredForm.condition} onChange={(e) => setOfferedForm({...offeredForm, condition: e.target.value})} />
           </div>
-          <div>
+          {/* <div>
             <label>Priority</label>
             <input className="profile-input-edit" type="number" placeholder="Enter priority (0-10)" value={offeredForm.priority} min="0" max="10" onChange={(e) => setOfferedForm({...offeredForm, priority: Number(e.target.value)})} />
-          </div>
+          </div> */}
           <div>
             <label>Images (up to 10)</label>
             <input className="profile-input-edit" type="file" multiple accept="image/*" onChange={handleOfferedImageChange} />
@@ -809,6 +1026,121 @@ export default function ProfilePage() {
             <input className="profile-input-edit" placeholder="Enter category" value={wantedForm.category} onChange={(e) => setWantedForm({...wantedForm, category: e.target.value})} />
           </div>
           <button className="btn-confirm-profile" onClick={handleAddWantedItem}>Add Wanted Item</button>
+        </Modal>
+      )}
+
+      {/* Rating Modal */}
+      {ratingModalOpen && (
+        <Modal onClose={() => {
+          setRatingModalOpen(false);
+          setRatingForm({ score: 0, review: "" });
+        }} title="Give a Review">
+          <div style={{ marginBottom: '24px' }}>
+            <label style={{ display: 'block', marginBottom: '12px', fontSize: '16px', fontWeight: '600', color: '#ffffff' }}>
+              Rate your experience
+            </label>
+            <InteractiveStarRating
+              score={ratingForm.score}
+              onScoreChange={(newScore) => setRatingForm({ ...ratingForm, score: newScore })}
+            />
+            <div style={{ 
+              textAlign: 'center', 
+              fontSize: '14px', 
+              color: '#ffffff', 
+              opacity: 0.8, 
+              marginTop: '12px',
+              fontWeight: '500'
+            }}>
+              {ratingForm.score === 0 ? 'Tap a star to rate' : 
+               ratingForm.score === 1 ? 'Poor' :
+               ratingForm.score === 2 ? 'Fair' :
+               ratingForm.score === 3 ? 'Good' :
+               ratingForm.score === 4 ? 'Very Good' :
+               'Excellent'}
+            </div>
+          </div>
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '16px', fontWeight: '600', color: '#ffffff' }}>Review Message</label>
+            <textarea
+              name="review"
+              placeholder="Write your review here..."
+              value={ratingForm.review}
+              onChange={(e) => setRatingForm({ ...ratingForm, review: e.target.value })}
+              rows={5}
+              style={{
+                width: '100%',
+                padding: '12px 16px',
+                background: 'rgba(255, 255, 255, 0.1)',
+                color: '#ffffff',
+                border: '2px solid rgba(255, 255, 255, 0.3)',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontFamily: 'inherit',
+                resize: 'vertical',
+                boxSizing: 'border-box'
+              }}
+            />
+          </div>
+          <button
+            className="btn-confirm-profile"
+            onClick={async () => {
+              if (ratingForm.score === 0) {
+                alert("Please select a rating");
+                return;
+              }
+              if (!ratingForm.review.trim()) {
+                alert("Please write a review message");
+                return;
+              }
+              if (!authUser?.username || !targetUsername) {
+                alert("User information not available");
+                return;
+              }
+
+              setSubmittingRating(true);
+              try {
+                await axios.post("/ratings", {
+                  rater: { username: authUser.username },
+                  ratedUser: { username: targetUsername },
+                  score: ratingForm.score,
+                  review: ratingForm.review.trim()
+                });
+                
+                // Refresh ratings and user data to show new rating
+                const [ratingsRes, userRes] = await Promise.all([
+                  axios.get(`/ratings/user/${targetUsername}`),
+                  axios.get(`/users/${targetUsername}`)
+                ]);
+                
+                setRatings(ratingsRes.data || []);
+                
+                const userData = userRes.data;
+                setUser({
+                  ...user,
+                  rating: userData.rating || user.rating
+                });
+                
+                if (isOwnProfile) {
+                  updateUser({
+                    ...authUser,
+                    rating: userData.rating || authUser.rating
+                  });
+                }
+                
+                alert("Review submitted successfully");
+                setRatingModalOpen(false);
+                setRatingForm({ score: 0, review: "" });
+              } catch (err) {
+                console.error("Error submitting rating:", err);
+                alert("Failed to submit review: " + (err.response?.data || err.message));
+              } finally {
+                setSubmittingRating(false);
+              }
+            }}
+            disabled={submittingRating}
+          >
+            {submittingRating ? "Submitting..." : "Submit Review"}
+          </button>
         </Modal>
       )}
     </div>

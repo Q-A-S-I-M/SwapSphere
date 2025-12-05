@@ -1,0 +1,25 @@
+.chat-page {
+  display: flex;
+  height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.no-chat-selected {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: var(--card);
+  border-left: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.empty-state {
+  text-align: center;
+  color: var(--muted);
+  font-size: 1.2rem;
+}
+
+.empty-state p {
+  margin: 0;
+}

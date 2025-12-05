@@ -1,6 +1,7 @@
 package com.example.SwapSphere.Services;
 
 import java.util.List;
+import java.util.ArrayList;
 import java.time.LocalDateTime;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,9 +12,10 @@ import org.springframework.stereotype.Service;
 import com.example.SwapSphere.DTOs.CreateSwapRequest;
 import com.example.SwapSphere.DTOs.SwapResponseDTO;
 import com.example.SwapSphere.DTOs.SwapWithImages;
+import com.example.SwapSphere.Entities.Notification;
 import com.example.SwapSphere.Entities.OfferedItem;
 import com.example.SwapSphere.Entities.Swap;
-import com.example.SwapSphere.Entities.UserWallet;
+import com.example.SwapSphere.Entities.User;
 import com.example.SwapSphere.RowMappers.SwapResponseDTORowMapper;
 import com.example.SwapSphere.RowMappers.SwapRowMapper;
 import com.example.SwapSphere.RowMappers.SwapWithImagesRowMapper;
@@ -67,15 +69,7 @@ public class SwapServiceImpl implements SwapService {
             throw new RuntimeException("Requested item not found");
         }
 
-        // Validate token availability BEFORE inserting swap
-        if (request.getTokens() > 0) {
-            UserWallet wallet = userWalletService.getWalletByUserId(request.getSenderUsername());
-            int availableTokens = wallet.getTokensAvailable() - wallet.getTokensLocked();
-            if (availableTokens < request.getTokens()) {
-                throw new RuntimeException("Not enough tokens available. You have " + availableTokens + " tokens available, but trying to offer " + request.getTokens() + " tokens.");
-            }
-        }
-
+        // No token validation - users can offer any amount of tokens in swaps
         String sql = """
             INSERT INTO swap_proposals (sender, receiver, offered_item, requested_item, status, created_at, tokens)
             VALUES (?, ?, ?, ?, 'PENDING', NOW(), ?)
@@ -90,10 +84,6 @@ public class SwapServiceImpl implements SwapService {
         );
 
         String lastSql = "SELECT * FROM swap_proposals ORDER BY swap_id DESC LIMIT 1";
-        // Lock tokens after successful swap creation
-        if (request.getTokens() > 0) {
-            userWalletService.lockTokens(request.getSenderUsername(), request.getTokens());
-        }
         return template.queryForObject(lastSql, swapRowMapper);
     }
 
@@ -117,7 +107,10 @@ public class SwapServiceImpl implements SwapService {
     }
 
     @Override
-    public Swap updateStatus(Long id, String status) {
+    public Swap updateStatus(Long id, String status, String currentUsername) {
+        // Get the swap before updating to check current status
+        Swap swapBeforeUpdate = getSwapById(id);
+        String previousStatus = swapBeforeUpdate.getStatus();
         
         String sql = """
             UPDATE swap_proposals
@@ -135,8 +128,164 @@ public class SwapServiceImpl implements SwapService {
                 completedTime,
                 id);
         Swap swap = getSwapById(id);
-        notificationService.generateNotificationForSwaps(swap, status);
+        
+        Long requestedItemId = swap.getRequestedItem() != null ? swap.getRequestedItem().getOfferedItemId() : null;
+        Long offeredItemId = swap.getOfferedItem() != null ? swap.getOfferedItem().getOfferedItemId() : null;
+        
+        // Handle ACCEPTED status
+        if (status.equalsIgnoreCase("ACCEPTED")) {
+            // Set both items to UNAVAILABLE
+            if (requestedItemId != null) {
+                offeredItemsService.updateItemStatus(requestedItemId, "UNAVAILABLE");
+            }
+            if (offeredItemId != null) {
+                offeredItemsService.updateItemStatus(offeredItemId, "UNAVAILABLE");
+            }
+            
+            // Find all PENDING swaps involving either of these items and set them to HOLD
+            List<Swap> relatedSwaps = findRelatedSwaps(id, offeredItemId, requestedItemId, "PENDING");
+            
+            for (Swap relatedSwap : relatedSwaps) {
+                String holdSql = "UPDATE swap_proposals SET status = 'HOLD' WHERE swap_id = ?";
+                template.update(holdSql, relatedSwap.getSwapId());
+            }
+        }
+        // Handle CANCELLED status
+        else if (status.equalsIgnoreCase("CANCELLED")) {
+            // If cancelling from ACCEPTED, restore items to AVAILABLE and reactivate HOLD swaps
+            if (previousStatus != null && previousStatus.equalsIgnoreCase("ACCEPTED")) {
+                // Set both items back to AVAILABLE
+                if (requestedItemId != null) {
+                    offeredItemsService.updateItemStatus(requestedItemId, "AVAILABLE");
+                }
+                if (offeredItemId != null) {
+                    offeredItemsService.updateItemStatus(offeredItemId, "AVAILABLE");
+                }
+                
+                // Find all HOLD swaps involving either of these items and set them back to PENDING
+                List<Swap> holdSwaps = findRelatedSwaps(id, offeredItemId, requestedItemId, "HOLD");
+                
+                for (Swap holdSwap : holdSwaps) {
+                    String pendingSql = "UPDATE swap_proposals SET status = 'PENDING' WHERE swap_id = ?";
+                    template.update(pendingSql, holdSwap.getSwapId());
+                }
+            }
+            // If cancelling from PENDING, no token action needed (items remain AVAILABLE)
+        }
+        // Handle COMPLETED status
+        else if (status.equalsIgnoreCase("COMPLETED")) {
+            // Items should already be UNAVAILABLE (set when swap was ACCEPTED)
+            // Cancel all related swaps (PENDING, HOLD, ACCEPTED)
+            List<Swap> relatedSwaps = new ArrayList<>();
+            
+            // Find swaps with status PENDING, HOLD, or ACCEPTED
+            if (offeredItemId != null && requestedItemId != null) {
+                String findRelatedSwapsSql = """
+                    SELECT * FROM swap_proposals 
+                    WHERE swap_id != ? 
+                    AND status IN ('PENDING', 'HOLD', 'ACCEPTED')
+                    AND (
+                        offered_item = ? OR requested_item = ? 
+                        OR offered_item = ? OR requested_item = ?
+                    )
+                """;
+                relatedSwaps = template.query(findRelatedSwapsSql, swapRowMapper,
+                        id, offeredItemId, offeredItemId, requestedItemId, requestedItemId);
+            } else if (offeredItemId != null) {
+                String findRelatedSwapsSql = """
+                    SELECT * FROM swap_proposals 
+                    WHERE swap_id != ? 
+                    AND status IN ('PENDING', 'HOLD', 'ACCEPTED')
+                    AND (offered_item = ? OR requested_item = ?)
+                """;
+                relatedSwaps = template.query(findRelatedSwapsSql, swapRowMapper,
+                        id, offeredItemId, offeredItemId);
+            } else if (requestedItemId != null) {
+                String findRelatedSwapsSql = """
+                    SELECT * FROM swap_proposals 
+                    WHERE swap_id != ? 
+                    AND status IN ('PENDING', 'HOLD', 'ACCEPTED')
+                    AND (offered_item = ? OR requested_item = ?)
+                """;
+                relatedSwaps = template.query(findRelatedSwapsSql, swapRowMapper,
+                        id, requestedItemId, requestedItemId);
+            }
+            
+            // Cancel all related swaps (auto-cancellation - no notifications)
+            for (Swap relatedSwap : relatedSwaps) {
+                String cancelSql = "UPDATE swap_proposals SET status = 'CANCELLED' WHERE swap_id = ?";
+                template.update(cancelSql, relatedSwap.getSwapId());
+                // No notification for auto-cancellations when swap is completed
+            }
+        }
+        
+        // Generate notifications
+        if (status.equalsIgnoreCase("CANCELLED") && previousStatus != null && previousStatus.equalsIgnoreCase("ACCEPTED")) {
+            // When cancelling an accepted swap, notify the OTHER party
+            User cancellingUser = null;
+            User otherUser = null;
+            
+            // Determine who cancelled and who to notify
+            if (currentUsername != null && currentUsername.equals(swap.getSender().getUsername())) {
+                cancellingUser = swap.getSender();
+                otherUser = swap.getReceiver();
+            } else if (currentUsername != null && currentUsername.equals(swap.getReceiver().getUsername())) {
+                cancellingUser = swap.getReceiver();
+                otherUser = swap.getSender();
+            } else {
+                // Fallback: if we can't determine, notify receiver (common case)
+                cancellingUser = swap.getSender();
+                otherUser = swap.getReceiver();
+            }
+            
+            // Notify the other party
+            String itemTitle = swap.getRequestedItem() != null ? swap.getRequestedItem().getTitle() : "the item";
+            String message = cancellingUser.getUsername() + " has cancelled the accepted swap for " + itemTitle + ". The items are now available again.";
+            notificationService.addNotification(new Notification(null, otherUser, "RED", message, false, null));
+        } else if (!status.equalsIgnoreCase("CANCELLED") || (previousStatus != null && !previousStatus.equalsIgnoreCase("ACCEPTED"))) {
+            // Generate normal notifications for other statuses (not auto-cancellation)
+            notificationService.generateNotificationForSwaps(swap, status);
+        }
         return swap;
+    }
+    
+    // Helper method to find related swaps
+    private List<Swap> findRelatedSwaps(Long excludeSwapId, Long offeredItemId, Long requestedItemId, String statusFilter) {
+        List<Swap> relatedSwaps = new ArrayList<>();
+        
+        if (offeredItemId != null && requestedItemId != null) {
+            String findRelatedSwapsSql = """
+                SELECT * FROM swap_proposals 
+                WHERE swap_id != ? 
+                AND status = ?
+                AND (
+                    offered_item = ? OR requested_item = ? 
+                    OR offered_item = ? OR requested_item = ?
+                )
+            """;
+            relatedSwaps = template.query(findRelatedSwapsSql, swapRowMapper,
+                    excludeSwapId, statusFilter, offeredItemId, offeredItemId, requestedItemId, requestedItemId);
+        } else if (offeredItemId != null) {
+            String findRelatedSwapsSql = """
+                SELECT * FROM swap_proposals 
+                WHERE swap_id != ? 
+                AND status = ?
+                AND (offered_item = ? OR requested_item = ?)
+            """;
+            relatedSwaps = template.query(findRelatedSwapsSql, swapRowMapper,
+                    excludeSwapId, statusFilter, offeredItemId, offeredItemId);
+        } else if (requestedItemId != null) {
+            String findRelatedSwapsSql = """
+                SELECT * FROM swap_proposals 
+                WHERE swap_id != ? 
+                AND status = ?
+                AND (offered_item = ? OR requested_item = ?)
+            """;
+            relatedSwaps = template.query(findRelatedSwapsSql, swapRowMapper,
+                    excludeSwapId, statusFilter, requestedItemId, requestedItemId);
+        }
+        
+        return relatedSwaps;
     }
 
     @Override

@@ -79,6 +79,16 @@
   box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
   background: rgba(255, 255, 255, 0.15);
 }
+.profile-input-edit.input-error {
+  border-color: #ff4c4c;
+  background: rgba(255, 76, 76, 0.1);
+}
+.field-error {
+  color: #f99;
+  font-size: 0.85rem;
+  margin-top: 4px;
+  padding-left: 4px;
+}
 .profile-input-edit::placeholder {
   color: rgba(255, 255, 255, 0.6);
 }
