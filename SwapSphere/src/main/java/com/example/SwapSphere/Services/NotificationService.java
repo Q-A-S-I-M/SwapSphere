@@ -22,5 +22,6 @@ public interface NotificationService {
     void generatePriorityIncreaseNotification(User user, String title);
 
     void generateReviewNotification(Rating rating);
-    
+
+    Notification giveWarning(String username, String reason);
 }

@@ -690,6 +690,7 @@ export default function ProfilePage() {
                   try {
                     // TODO: Implement backend endpoint for warning users
                     // await axios.post(`/admin/warn/${targetUsername}`, { reason: warnReason });
+                    await axios.post(`/notifications/warn/${targetUsername}`, { reason: warnReason });
                     alert(`Warning sent to ${targetUsername}: ${warnReason}`);
                     setWarnModalOpen(false);
                     setWarnReason("");

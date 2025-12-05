@@ -32,6 +32,7 @@ const NotificationPage = ({ username }) => {
     if (upperType === "RED") return "red";
     if (upperType === "GREEN") return "green";
     if (upperType === "BLUE") return "blue";
+    if (upperType === "YELLOW") return "yellow";
     return "blue"; // default
   };
 
